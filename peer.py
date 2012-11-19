@@ -60,7 +60,7 @@ class Peer:
         
         
     
-    def create_incomming_socket(self, port):
+    def create_incoming_socket(self, port):
         """erstellt einen Socket welcher auf einem bestimmten Port lauscht"""
         s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
         s.bind( ( '', port ) )
@@ -70,7 +70,7 @@ class Peer:
     def listen_to_socket(self):
         """lauscht nach eingehenden connections und spereriert diese in eigene Threads"""
        
-        in_socket = self.create_incomming_socket(self.port)
+        in_socket = self.create_incoming_socket(self.port)
         print 'Socket lauscht auf Port %d' % self.port
         
         while not self.down:
