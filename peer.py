@@ -13,6 +13,8 @@ class Peer:
         self.ip_addr = self.__init_ip_lookup()
         if peer_id: self.peer_id = peer_id
         else: self.peer_id = '%s:%d' % (self.ip_addr, self.port)
+
+        print "Connect via hachat://" + self.peer_id
         
         self.peers = {} # list of known peers (ip_addr, port, hops)
         self.down = False
@@ -48,12 +50,13 @@ class Peer:
             return True
     
     def peer_connection(self, peer_socket):
-        """hier soll die neue verbindung zu einem neuen Peer
-        verwaltet werden. """
+        """hier soll die neue verbindung zu einem neuen Peer verwaltet werden. """
         
         #bisher nur beispielhafte funktionalitaet
-        
         peer_addr, peer_port = peer_socket.getpeername()
+
+        peer_socket.send("Thanks for connecting, " + peer_addr + ":" + str(peer_port))
+
         if not self.add_to_peerList(peer_addr, peer_port):
             peer_socket.close()
         else: self.add_to_peerList(peer_addr, peer_port)
@@ -85,11 +88,11 @@ class Peer:
                 print "Stop"
                 self.down = True
         
-        in_socket.close()
-        
+        in_socket.close()  
 
 p = Peer(5000)
 p.listen_to_socket()
 p.turndown()
     
-        
+# Modeline for vim:
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
