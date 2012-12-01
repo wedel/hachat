@@ -5,6 +5,7 @@ import socket
 import threading
 import time
 from collections import deque
+import message
 
 
 class Host:
@@ -30,17 +31,20 @@ class Host:
 
 
     def sendHello(self):
-        print 'called sendhello'
+        print 'called sendhello method'
         hoststr = self.hostIP + ":" + str(self.hostPort)
         hellostr = "HELLO YOU:" + hoststr + " CALLME:" + str(self.myPeer.port)
-        self.addToMsgQueue(hellostr)
+        helo = message.Message("HELO", hellostr)
+        self.addToMsgQueue(helo)
 
     def startSendLoop(self):
         while True:
             time.sleep(3)
             if self.msgQueue:
                 msg = self.msgQueue.popleft()
-                self.outSocket.sendto(msg, (self.hostIP, self.hostPort))
+                #convert to string to send over socket
+                msgStr = str(msg)                
+                self.outSocket.sendto(msgStr, (self.hostIP, self.hostPort))
             
     def addToMsgQueue(self, message):
         print "adding", message

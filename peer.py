@@ -3,7 +3,7 @@
 
 import socket
 import threading
-from message import Message
+import message
 from host import Host
 
 class Peer:
@@ -23,7 +23,6 @@ class Peer:
         print "Listening on port", self.port
         if firstHost != None:
             self.addToHosts(firstHost)
-
         self.startRecvLoop()
         
 
@@ -32,12 +31,13 @@ class Peer:
             while True:
                 data, addr = self.inSocket.recvfrom(self.BUFSIZE)
                 # TODO!!!! zum test:
-                i = data.find("CALLME:")
+                msg = message.toMessage(data)
+                i = msg.msgstring.find("CALLME:")
                 i = i+7
                 (ip, port) = addr
-                addr = (ip, int(data[i:]))
+                addr = (ip, int(msg.msgstring[i:]))
                 self.addToHosts(addr) 
-                print "received:", data, "from", addr
+                print "received:", msg.msgstring, "from", addr
 
         except Exception, e:
             print "Error: ", e
