@@ -19,6 +19,7 @@ class Peer:
     def __init__(self, firstHost = None):
         self.inSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.inSocket.bind(('', 0))
+        self.ip = socket.gethostbyname(socket.gethostname())
         self.port = int(self.inSocket.getsockname()[1])
         print "Listening on port", self.port
         if firstHost != None:
@@ -29,15 +30,16 @@ class Peer:
     def startRecvLoop(self):
         try:
             while True:
-                data, addr = self.inSocket.recvfrom(self.BUFSIZE)
-                # TODO!!!! zum test:
-                msg = message.toMessage(data)
-                i = msg.msgstring.find("CALLME:")
-                i = i+7
-                (ip, port) = addr
-                addr = (ip, int(msg.msgstring[i:]))
-                self.addToHosts(addr) 
+                (data, addr) = self.inSocket.recvfrom(self.BUFSIZE)
+                try:
+                    msg = message.toMessage(data)
+                #except MessageError:
+                except Exception,e:
+                    print e
                 print "received:", msg.msgstring, "from", addr
+                # get serverport of other host from message
+                inputaddr = (msg.senderIP, msg.senderPort)
+                self.addToHosts(inputaddr) 
 
         except Exception, e:
             print "Error: ", e
@@ -45,10 +47,10 @@ class Peer:
             print "Quitting.."
 
     def addToHosts(self, addr):
-        print "adding", addr
+        print "adding", addr, "to hostlist"
         (hostIP, hostPort) = addr
         h = Host(self, hostIP, hostPort)
-        h.sendHello()
+        h.sendHello() # send helo to h
         self.hosts[hostIP] = h
 
 

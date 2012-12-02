@@ -10,10 +10,10 @@ import message
 
 class Host:
     myPeer = None
-    hostIP = None
+    hostIP = None # IP of recipient
     outSocket = None
     inPort = 0
-    hostPort = 0
+    hostPort = 0 # port of recipient
     sendThread = None
     msgQueue = deque()
 
@@ -31,10 +31,9 @@ class Host:
 
 
     def sendHello(self):
-        print 'called sendhello method'
-        hoststr = self.hostIP + ":" + str(self.hostPort)
-        hellostr = "HELLO YOU:" + hoststr + " CALLME:" + str(self.myPeer.port)
-        helo = message.Message("HELO", hellostr)
+        #print 'called sendhello method'
+        hellostr = "HELLO YOU! CALL ME!"
+        helo = message.Message(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port, "HELO", hellostr)
         self.addToMsgQueue(helo)
 
     def startSendLoop(self):
@@ -44,13 +43,15 @@ class Host:
                 msg = self.msgQueue.popleft()
                 #convert to string to send over socket
                 msgStr = str(msg)                
-                self.outSocket.sendto(msgStr, (self.hostIP, self.hostPort))
+                self.outSocket.sendto(msgStr, (msg.recipientIP, msg.recipientPort))
             
-    def addToMsgQueue(self, message):
-        print "adding", message
-        self.msgQueue.append(message)
-
-
+    def addToMsgQueue(self, msg):
+        '''check if message is type Message and add to Queue'''
+        if isinstance(msg, message.Message):
+            print "adding", msg, "to MsgQueue"
+            self.msgQueue.append(msg)
+        else:
+            raise Exception("Will only send Message objects!")
 
     def __del__(self):
         self.outSocket.close()
