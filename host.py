@@ -9,6 +9,7 @@ import message
 
 
 class Host:
+    '''Class representing a connection to another peer'''
     myPeer = None
     hostIP = None # IP of recipient
     outSocket = None
@@ -32,11 +33,11 @@ class Host:
 
     def sendHello(self):
         #print 'called sendhello method'
-        hellostr = "HELLO YOU! CALL ME!"
-        helo = message.Message(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port, "HELO", hellostr)
+        helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port)
         self.addToMsgQueue(helo)
 
     def startSendLoop(self):
+        '''send Message objects from Queue as string'''
         while True:
             time.sleep(3)
             if self.msgQueue:

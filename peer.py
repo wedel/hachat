@@ -34,12 +34,14 @@ class Peer:
                 try:
                     msg = message.toMessage(data)
                 except message.MessageException, e:
-                #except Exception,e:
                     print e
-                print "received:", msg.msgstring, "from", addr
+                if isinstance(msg, message.HeloMessage):
+                    print "received: HELO from", addr
+                    inputaddr = (msg.senderIP, msg.senderPort)
+                    self.addToHosts(inputaddr) 
+                else:
+                    print "received:", msg.msgstring, "from", addr
                 # get serverport of other host from message
-                inputaddr = (msg.senderIP, msg.senderPort)
-                self.addToHosts(inputaddr) 
 
         except Exception, e:
             print "Error: ", e
@@ -47,11 +49,19 @@ class Peer:
             print "Quitting.."
 
     def addToHosts(self, addr):
-        print "adding", addr, "to hostlist"
+        '''check if already in hostlist otherwise add'''
         (hostIP, hostPort) = addr
-        h = Host(self, hostIP, hostPort)
-        h.sendHello() # send helo to h
-        self.hosts[hostIP] = h
+        
+        key = hostIP + ':' + str(hostPort) # construct key
+        
+        #insert in host dict
+        if key in self.hosts:
+            print key , 'already in hostlist'
+        else:
+            print "adding", key, "to hostlist"
+            h = Host(self, hostIP, hostPort)
+            h.sendHello() # send helo to h
+            self.hosts[key] = h
 
 
     def __del__(self):
