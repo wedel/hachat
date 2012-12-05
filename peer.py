@@ -2,8 +2,11 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 import socket
-#import threading
+import threading
 import message
+import sys
+import select
+import time
 from host import Host
 
 class Peer:
@@ -24,6 +27,13 @@ class Peer:
         print "Listening on port", self.port
         if firstHost != None:
             self.addToHosts(firstHost)
+            
+        try: #lesen von stdIn als Thread...
+            self.keyboardThread = threading.Thread(target=self.checkStdIn) 
+            self.keyboardThread.daemon = True
+            self.keyboardThread.start()
+        except (KeyboardInterrupt,SystemExit):
+            print "Quitting Peer.."
         self.startRecvLoop()
         
 
@@ -68,10 +78,29 @@ class Peer:
             #testende
         else:
             #insert in host dict
-            print "adding", key, "to hostlist"ah 
+            print "adding", key, "to hostlist" 
             h = Host(self, hostIP, hostPort)
             h.sendHello() # send helo to h
             self.hosts[key] = h
+            
+    def checkStdIn(self):
+        '''checkt ob in sdtIn geschrieben wird und
+        sendet dann alle peers aus host-liste die nachricht
+        wird als thread gerufen, scheint so ueblich zu sein, sihe
+        http://stackoverflow.com/questions/292095/polling-the-keyboard-in-python'''
+        #print "checkStdIn called"
+        while True:
+            try:
+                i,o,e = select.select([sys.stdin],[],[],0.0001) #checkt ob irgendwas auf sdtIN
+            except:
+                raise 'could not read from stdIn'                
+            for s in i:
+                if s == sys.stdin and len(self.hosts) > 0: #falls, und hosts in der liste, so
+                    msgstring = sys.stdin.readline() # wird dies an alle in der liste verteilt
+                    for h in self.hosts.values():
+                        #print "trying to send msg to %s:%s" %(recIP,recPort)
+                        msg = message.TextMessage(self.ip, msgstring)
+                        h.addToMsgQueue(msg)
 
 
     def __del__(self):
