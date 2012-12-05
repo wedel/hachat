@@ -44,10 +44,10 @@ def toMessage(string):
                 print string
                 #enddebug
                 (HEAD, recipientIP, recipientPort, senderIP, senderPort, type, msgstring) = re.split(',', string, 7)
-        except Exception,e:
-                #raise MessageError("malformed message recieved")
+        except Exception, e:
+                raise MessageException("malformed message recieved")
                 print e
-                raise Exception("malformed message recieved")
+                #raise Exception("malformed message recieved")
                 
         # cast ports to int
         recipientPort = int(recipientPort)
@@ -56,5 +56,12 @@ def toMessage(string):
         if HEAD == "HACHAT VER0.1":
                 return Message(recipientIP, recipientPort, senderIP, senderPort, type, msgstring)
         else:
-                #raise MessageError("wrong Header: " + HEAD)
-                raise Exception("wrong Header: " + HEAD)
+                raise MessageException("wrong Header: " + HEAD)
+                #raise Exception("wrong Header: " + HEAD)
+                
+class MessageException(Exception):
+        '''Custom Exception Type for Messages'''
+        def __init__(self, value):
+                 self.parameter = value
+        def __str__(self):
+                return repr(self.parameter)

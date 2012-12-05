@@ -2,7 +2,7 @@
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 import socket
-import threading
+#import threading
 import message
 from host import Host
 
@@ -33,8 +33,8 @@ class Peer:
                 (data, addr) = self.inSocket.recvfrom(self.BUFSIZE)
                 try:
                     msg = message.toMessage(data)
-                #except MessageError:
-                except Exception,e:
+                except message.MessageException, e:
+                #except Exception,e:
                     print e
                 print "received:", msg.msgstring, "from", addr
                 # get serverport of other host from message
