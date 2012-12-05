@@ -11,6 +11,9 @@ class Message(object): # inherit from object
         uid = None
         #msgstring = None
         def __init__(self, uid):
+                ''' build Message with supplied uid
+                or otherwise get a random uid'''
+                
                 super(Message, self).__init__() # inherit from object
                 # set unifier
                 if uid == None:
@@ -20,11 +23,11 @@ class Message(object): # inherit from object
 
         def __str__(self):
                 '''cast Message to string'''
-                # to implement
-                raise NotImplementedError
+                raise NotImplementedError # must be implemented by SubClass
                 
 class HeloMessage(Message):
-        '''regularly sent HELO Message'''
+        '''regularly sent HELO Message which exchange information on IP and Port
+        Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderIP | senderPort | '''
         
         recipientIP = None
         recipientPort = None
@@ -53,7 +56,8 @@ class HeloMessage(Message):
                 return string
                 
 class TextMessage(Message):
-        ''' normal Text Messages'''
+        ''' normal Text Messages
+        Message layout: | HEAD | type | uid | hash | sender name | text | '''
         
         hash = None
         name = None
@@ -62,9 +66,9 @@ class TextMessage(Message):
         def __init__(self, name, text, uid=None):
                 super(TextMessage, self).__init__(uid)
                 self.type = "TXT"
-                
                 self.name = name
                 self.text = text
+                
                 # make md5-hash over uid, name, text
                 hasher = hashlib.md5()
                 hasher.update(str(self.uid))
@@ -115,9 +119,9 @@ def toMessage(string):
                         raise MessageException("malformed TextMessage recieved")
                         print e
                 
-                # test hash
                 msg = TextMessage(name, text, uid)
                 
+                 # test hash
                 if msg.hash != hash:
                         raise MessageException("TextMessage has wrong hash")
                 else:

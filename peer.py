@@ -28,23 +28,28 @@ class Peer:
         
 
     def startRecvLoop(self):
+        ''' general recieve loop of a peer '''
         try:
             while True:
                 (data, addr) = self.inSocket.recvfrom(self.BUFSIZE)
+                # try to build Message object and decide what to do with it based on type
                 try:
                     msg = message.toMessage(data)
                 except message.MessageException, e:
                     print e
+                    
                 if isinstance(msg, message.HeloMessage):
                     print "received: HELO from", addr
                     inputaddr = (msg.senderIP, msg.senderPort)
                     self.addToHosts(inputaddr) 
+                    
                 elif isinstance(msg, message.TextMessage):
-                    print "received:",  msg.text, "from", msg.name
+                    print msg.name + ":",  msg.text
+                    
                 else:
                     print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
                     print type(msg)
-
+                    
         except Exception, e:
             print "Error: ", e
         except KeyboardInterrupt:
@@ -53,18 +58,17 @@ class Peer:
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
         (hostIP, hostPort) = addr
-        
         key = hostIP + ':' + str(hostPort) # construct key
         
-        #insert in host dict
         if key in self.hosts:
-            #test sende message
+            #test send message to all peers
             msg = message.TextMessage(self.ip,  key + ' already in hostlist')
             for host in self.hosts:
                 self.hosts[host].addToMsgQueue(msg)
             #testende
         else:
-            print "adding", key, "to hostlist"
+            #insert in host dict
+            print "adding", key, "to hostlist"ah 
             h = Host(self, hostIP, hostPort)
             h.sendHello() # send helo to h
             self.hosts[key] = h
