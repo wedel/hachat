@@ -44,7 +44,7 @@ class Host:
                 msg = self.msgQueue.popleft()
                 #convert to string to send over socket
                 msgStr = str(msg)                
-                self.outSocket.sendto(msgStr, (msg.recipientIP, msg.recipientPort))
+                self.outSocket.sendto(msgStr, (self.hostIP, self.hostPort))
             
     def addToMsgQueue(self, msg):
         '''check if message is type Message and add to Queue'''

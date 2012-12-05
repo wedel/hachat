@@ -39,9 +39,11 @@ class Peer:
                     print "received: HELO from", addr
                     inputaddr = (msg.senderIP, msg.senderPort)
                     self.addToHosts(inputaddr) 
+                elif isinstance(msg, message.TextMessage):
+                    print "received:",  msg.text, "from", msg.name
                 else:
-                    print "received:", msg.msgstring, "from", addr
-                # get serverport of other host from message
+                    print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
+                    print type(msg)
 
         except Exception, e:
             print "Error: ", e
@@ -56,7 +58,11 @@ class Peer:
         
         #insert in host dict
         if key in self.hosts:
-            print key , 'already in hostlist'
+            #test sende message
+            msg = message.TextMessage(self.ip,  key + ' already in hostlist')
+            for host in self.hosts:
+                self.hosts[host].addToMsgQueue(msg)
+            #testende
         else:
             print "adding", key, "to hostlist"
             h = Host(self, hostIP, hostPort)
