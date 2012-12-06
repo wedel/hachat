@@ -71,11 +71,7 @@ class Peer:
         key = hostIP + ':' + str(hostPort) # construct key
         
         if key in self.hosts:
-            #test send message to all peers
-            msg = message.TextMessage(self.ip,  key + ' already in hostlist')
-            for host in self.hosts:
-                self.hosts[host].addToMsgQueue(msg)
-            #testende
+            print key, "alread in hostlist"
         else:
             #insert in host dict
             print "adding", key, "to hostlist" 
