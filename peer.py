@@ -18,11 +18,12 @@ class Peer:
     ip = None # IP des Peers
     port = None # Port auf dem der Peer hört
     hosts = {} # Dict. der bekannten Hosts
+    name = "temp"
 
     def __init__(self, firstHost = None):
         self.inSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.inSocket.bind(('', 0))
-        self.ip = socket.gethostbyname(socket.gethostname())
+        # self.ip = socket.gethostbyname(socket.gethostname())
         self.port = int(self.inSocket.getsockname()[1])
         print "Listening on port", self.port
         if firstHost != None:
@@ -50,7 +51,8 @@ class Peer:
                     
                 if isinstance(msg, message.HeloMessage):
                     print "received: HELO from", addr
-                    inputaddr = (msg.senderIP, msg.senderPort)
+                    senderIP = addr[0]
+                    inputaddr = (senderIP,  msg.senderPort)
                     self.addToHosts(inputaddr) 
                     
                 elif isinstance(msg, message.TextMessage):
@@ -95,7 +97,7 @@ class Peer:
                     msgstring = sys.stdin.readline() # wird dies an alle in der liste verteilt
                     for h in self.hosts.values():
                         #print "trying to send msg to %s:%s" %(recIP,recPort)
-                        msg = message.TextMessage(self.ip, msgstring)
+                        msg = message.TextMessage(self.name, msgstring)
                         h.addToMsgQueue(msg)
 
 

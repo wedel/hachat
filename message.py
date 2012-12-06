@@ -27,14 +27,14 @@ class Message(object): # inherit from object
                 
 class HeloMessage(Message):
         '''regularly sent HELO Message which exchange information on IP and Port
-        Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderIP | senderPort | '''
+        Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderPort | '''
         
         recipientIP = None
         recipientPort = None
-        senderIP = None
+        # senderIP = None
         senderPort = None
         
-        def __init__(self, recipientIP, recipientPort, senderIP, senderPort, uid=None):
+        def __init__(self, recipientIP, recipientPort, senderPort, uid=None):
                 super(HeloMessage, self).__init__(uid)
                 self.type = "HELO"
                 
@@ -44,15 +44,18 @@ class HeloMessage(Message):
                 else:
                         self.recipientIP = recipientIP
                         self.recipientPort = recipientPort
-                if senderIP == None or senderPort == None:
+                # if senderIP == None or senderPort == None:
+                if senderPort == None:
+                        print self
                         raise Exception("HeloMessage needs sender!")
                 else:
-                        self.senderIP = senderIP
+                        # self.senderIP = senderIP
                         self.senderPort = senderPort
                 
         def __str__(self):
                 '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
+                # string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
+                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort)])
                 return string
                 
 class TextMessage(Message):
@@ -99,11 +102,13 @@ def toMessage(string):
         # decide on type of message        
         if type == "HELO":
                 try:
-                        (recipientIP, recipientPort, senderIP, senderPort) = re.split(',', rest, 3) # get rest of message
+                        # (recipientIP, recipientPort, senderIP, senderPort) = re.split(',', rest, 3) # get rest of message
+                        (recipientIP, recipientPort, senderPort) = re.split(',', rest, 2) # get rest of message
                         # cast ports to int
                         recipientPort = int(recipientPort)
                         senderPort = int(senderPort)
-                        msg = HeloMessage(recipientIP, recipientPort, senderIP, senderPort, uid)
+                        #msg = HeloMessage(recipientIP, recipientPort, senderIP, senderPort, uid)
+                        msg = HeloMessage(recipientIP, recipientPort, senderPort, uid)
                         return msg
                         
                 except Exception, e:

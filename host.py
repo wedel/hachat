@@ -33,7 +33,8 @@ class Host:
 
     def sendHello(self):
         #print 'called sendhello method'
-        helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port)
+        # helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port)
+        helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.port)
         self.addToMsgQueue(helo)
 
     def startSendLoop(self):
