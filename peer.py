@@ -26,8 +26,9 @@ class Peer:
         self.port = int(self.inSocket.getsockname()[1])
         print "Listening on port", self.port
         if firstHost != None:
-            self.addToHosts(firstHost)
-            
+            (hostIP, hostPort) = firstHost
+            h = Host(self, hostIP, hostPort)
+            h.sendHello()
         try: #lesen von stdIn als Thread...
             self.keyboardThread = threading.Thread(target=self.checkStdIn) 
             self.keyboardThread.daemon = True
