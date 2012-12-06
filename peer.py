@@ -71,14 +71,10 @@ class Peer:
                     self.addToHosts(inputaddr) 
                     
                 elif isinstance(msg, message.TextMessage):
-                    if not self.history.msgExists(msg):
-                        if not self.history.msgSafed(msg):
-                            print "Messag" + msg.text + "in hashDic, not safed anymore"
+                    if not self.history.msgExists(msg) and msg.name != self.name:
                         self.history.addMsg(msg)
-                        print msg.name + ":",  msg.text
-                    else:
-                        print "Message" + msg.text + "already in History"
-                    
+                        self.forwardMsg(msg)
+                        print msg.name + ":",  msg.text                    
                 else:
                     print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
                     print type(msg)
@@ -87,6 +83,14 @@ class Peer:
             print "Error: ", e
         except KeyboardInterrupt:
             print "Quitting.."
+
+    def forwardMsg(self,msg):
+        if len(self.hosts) > 0:
+            for h in self.hosts.values():
+                print "Message" + msg.text + "will be forwarded"
+                h.addToMsgQueue(msg)
+        else:
+            print "no peer in HostList, can not forward msg"
 
 
     def addToHosts(self, addr):
