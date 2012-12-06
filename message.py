@@ -186,7 +186,7 @@ class History:
 
     def removeMsg(self, msgQuant=0, hashQuant=0):
         if msgQuant > 0:
-            if len(msgDic) >= msgQuant:
+            if len(self.msgDic) >= msgQuant:
                 for i in range(0,msgQuant):
                     self.msgDic.popitem(last=False)
                 print "Erased %d msgs out of History" % msgQuant
@@ -194,7 +194,7 @@ class History:
                 raise MessageException('Can not remove msg out of MsgDict. Its to small')
 
         if hashQuant > 0:
-            if len(hashDic) >= hashQuant:
+            if len(self.hashDic) >= hashQuant:
                 for i in range(0,msgQuant):
                     self.hashDic.popleft()
                 print "Erased %d hashes out of Hash-History" % hashQuant

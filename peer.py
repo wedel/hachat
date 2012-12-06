@@ -48,7 +48,7 @@ class Peer:
             self.keyboardThread.start()
         except (KeyboardInterrupt,SystemExit):
             print "Quitting Peer.."
-        self.history = message.History()
+        self.history = message.History(2,10)
         self.startRecvLoop()
    
         
@@ -72,6 +72,8 @@ class Peer:
                     
                 elif isinstance(msg, message.TextMessage):
                     if not self.history.msgExists(msg):
+                        if not self.history.msgSafed(msg):
+                            print "Messag" + msg.text + "in hashDic, not safed anymore"
                         self.history.addMsg(msg)
                         print msg.name + ":",  msg.text
                     else:
