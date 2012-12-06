@@ -18,9 +18,13 @@ class Peer:
     ip = None # IP des Peers
     port = None # Port auf dem der Peer hört
     hosts = {} # Dict. der bekannten Hosts
-    name = "temp"
+    name = None
 
-    def __init__(self, firstHost = None, port = None):
+    def __init__(self, firstHost = None, port = None, name = "temp"):
+        
+        self.name = name # set peer name
+        
+        # open socket
         self.inSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         if port == None:
             # bind on random port
@@ -32,8 +36,8 @@ class Peer:
         self.port = int(self.inSocket.getsockname()[1])
         print "Listening on port", self.port
         
+        # send HELO to first host if you know one
         if firstHost != None:
-            # send HELO to first host if you know one
             (hostIP, hostPort) = firstHost
             h = Host(self, hostIP, hostPort)
             h.sendHello()
@@ -83,7 +87,7 @@ class Peer:
         key = hostIP + ':' + str(hostPort) # construct key
         
         if key in self.hosts:
-            print key, "alread in hostlist"
+            print key, "already in hostlist"
         else:
             #insert in host dict
             print "adding", key, "to hostlist" 
