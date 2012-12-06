@@ -20,22 +20,31 @@ class Peer:
     hosts = {} # Dict. der bekannten Hosts
     name = "temp"
 
-    def __init__(self, firstHost = None):
+    def __init__(self, firstHost = None, port = None):
         self.inSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.inSocket.bind(('', 0))
-        # self.ip = socket.gethostbyname(socket.gethostname())
+        if port == None:
+            # bind on random port
+            self.inSocket.bind(('', 0))
+        else:
+            # bind on given port
+            self.inSocket.bind(('', int(port)))
+            
         self.port = int(self.inSocket.getsockname()[1])
         print "Listening on port", self.port
+        
         if firstHost != None:
+            # send HELO to first host if you know one
             (hostIP, hostPort) = firstHost
             h = Host(self, hostIP, hostPort)
             h.sendHello()
+            
         try: #lesen von stdIn als Thread...
             self.keyboardThread = threading.Thread(target=self.checkStdIn) 
             self.keyboardThread.daemon = True
             self.keyboardThread.start()
         except (KeyboardInterrupt,SystemExit):
             print "Quitting Peer.."
+            
         self.startRecvLoop()
         
 

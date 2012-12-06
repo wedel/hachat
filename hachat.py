@@ -6,15 +6,12 @@ import re
 from peer import Peer
 
 parser = argparse.ArgumentParser(description="start peer with arguments")
-parser.add_argument("-p")
-parser.add_argument("-l")
+parser.add_argument("-p", help="Port to listen on")
+parser.add_argument("-l", help="hachat link (ex. localhost:12345)")
 args = parser.parse_args()
-
-print args
-print args.l
 
 if args.l != None:
     (hostIP, hostPort) = re.split(":", args.l, 1)
-    peer = Peer(firstHost = (hostIP, hostPort))
+    peer = Peer(firstHost = (hostIP, hostPort), port = args.p)
 else:
-    peer = Peer()
+    peer = Peer(port = args.p)

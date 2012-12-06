@@ -3,6 +3,5 @@ TODO
 
 TextMessages weiterleiten
 TextMessages splitten ind TextMessage.__init()__
-mit port starten -> argparse
 
 über peers austauschen
