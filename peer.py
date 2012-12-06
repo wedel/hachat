@@ -36,7 +36,9 @@ class Peer:
             self.keyboardThread.start()
         except (KeyboardInterrupt,SystemExit):
             print "Quitting Peer.."
+        self.history = message.History()
         self.startRecvLoop()
+   
         
 
     def startRecvLoop(self):
@@ -57,7 +59,11 @@ class Peer:
                     self.addToHosts(inputaddr) 
                     
                 elif isinstance(msg, message.TextMessage):
-                    print msg.name + ":",  msg.text
+                    if not self.history.msgExists(msg):
+                        self.history.addMsg(msg)
+                        print msg.name + ":",  msg.text
+                    else:
+                        print "Message" + msg.text + "already in History"
                     
                 else:
                     print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
@@ -67,6 +73,7 @@ class Peer:
             print "Error: ", e
         except KeyboardInterrupt:
             print "Quitting.."
+
 
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
