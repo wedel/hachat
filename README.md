@@ -9,4 +9,4 @@ python hachat.py
 
 python hachat.py [-l Link] [-p Port] [-n name] [-v verbose]
     
-    The Link must be a hachat link (ex. localhost:12345)
+The Link must be a hachat link (ex. localhost:12345)
