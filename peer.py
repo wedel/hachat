@@ -88,10 +88,10 @@ class Peer:
     def forwardMsg(self,msg):
         if len(self.hosts) > 0:
             for h in self.hosts.values():
-                print "Message" + msg.text + "will be forwarded"
+                logging.debug("Message" + msg.text + "will be forwarded")
                 h.addToMsgQueue(msg)
         else:
-            print "no peer in HostList, can not forward msg"
+            logging.debug("Peer %s:%d: No peer in HostList, can not forward msg" %(self.ip, self.port))
 
 
     def addToHosts(self, addr):

@@ -5,6 +5,7 @@ import re
 import random
 import hashlib
 from collections import OrderedDict, deque
+import logging
 
 class Message(object): # inherit from object
         HEAD = "HACHAT VER0.1"
@@ -154,12 +155,12 @@ class History:
     def __init__(self, msgLimit=100, hashLimit=1000):
         self.msgLimit = msgLimit
         self.hashLimit = hashLimit
-        print "History entered..."
+        logging.debug("History applied")
 
     def addMsg(self, msg):
         self.msgDic[msg.hash] = msg
         self.hashDic.append(msg.hash)
-        print "Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic))
+        logging.debug("Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic)))
 
         if len(self.msgDic) > self.msgLimit: 
             if len(self.hashDic) > self.hashLimit:
@@ -170,7 +171,7 @@ class History:
             elif len(self.hashDic) <= self.hashLimit:
                 msgQuant = ((len(self.msgDic))-self.msgLimit)
                 self.removeMsg(msgQuant,0)
-        print "added msg to history"
+        logging.debug("added msg to history")
     
     def msgExists(self,msg):
         if msg.hash in self.hashDic:
@@ -189,7 +190,7 @@ class History:
             if len(self.msgDic) >= msgQuant:
                 for i in range(0,msgQuant):
                     self.msgDic.popitem(last=False)
-                print "Erased %d msgs out of History" % msgQuant
+                logging.debug("Erased %d msgs out of History" % msgQuant)
             else:
                 raise MessageException('Can not remove msg out of MsgDict. Its to small')
 
@@ -197,13 +198,9 @@ class History:
             if len(self.hashDic) >= hashQuant:
                 for i in range(0,msgQuant):
                     self.hashDic.popleft()
-                print "Erased %d hashes out of Hash-History" % hashQuant
+                logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
             else:
                 raise MessageException('Can not remove hashes out of HashDict. Its to small')
 
                     
-     
-
-
-
 
