@@ -5,3 +5,4 @@ TODO
 TextMessages splitten ind TextMessage.__init()__
 
 über peers austauschen
+history check der letzten x nachrichten der nachbarn
