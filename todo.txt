@@ -1,7 +1,7 @@
 TODO
 ====
 
-TextMessages weiterleiten
+# TextMessages weiterleiten
 TextMessages splitten ind TextMessage.__init()__
 
 über peers austauschen

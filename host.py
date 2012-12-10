@@ -6,6 +6,7 @@ import threading
 import time
 from collections import deque
 import message
+import logging
 
 
 class Host:
@@ -16,13 +17,19 @@ class Host:
     inPort = 0
     hostPort = 0 # port of recipient
     sendThread = None
-    msgQueue = deque()
+    # msgQueue = deque()
 
     def __init__(self, myPeer, hostIP, hostPort):
+        
+        # init own msgQueue
+        self.msgQueue = deque()
+        
         self.outSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.myPeer = myPeer
         self.hostIP = hostIP
         self.hostPort = int(hostPort)
+        
+        # start send thread
         try: 
             self.sendThread = threading.Thread(target=self.startSendLoop) 
             self.sendThread.daemon = True
@@ -40,7 +47,7 @@ class Host:
     def startSendLoop(self):
         '''send Message objects from Queue as string'''
         while True:
-            time.sleep(3)
+            time.sleep(1)
             if self.msgQueue:
                 msg = self.msgQueue.popleft()
                 #convert to string to send over socket
@@ -50,7 +57,7 @@ class Host:
     def addToMsgQueue(self, msg):
         '''check if message is type Message and add to Queue'''
         if isinstance(msg, message.Message):
-            print "adding", msg, "to MsgQueue"
+            logging.debug("adding " + str(msg) + " to MsgQueue to " + self.hostIP + ":" + str(self.hostPort))
             self.msgQueue.append(msg)
         else:
             raise Exception("Will only send Message objects!")

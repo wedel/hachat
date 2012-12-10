@@ -8,6 +8,7 @@ import sys
 import select
 import time
 from host import Host
+import logging
 
 class Peer:
     """ Peer Klasse """
@@ -65,9 +66,9 @@ class Peer:
                     print e
                     
                 if isinstance(msg, message.HeloMessage):
-                    print "received: HELO from", addr
                     senderIP = addr[0]
                     inputaddr = (senderIP,  msg.senderPort)
+                    logging.debug("received: HELO from " + str(inputaddr))
                     self.addToHosts(inputaddr) 
                     
                 elif isinstance(msg, message.TextMessage):
@@ -99,13 +100,14 @@ class Peer:
         key = hostIP + ':' + str(hostPort) # construct key
         
         if key in self.hosts:
-            print key, "already in hostlist"
+            logging.debug(key + " already in hostlist")
         else:
             #insert in host dict
-            print "adding", key, "to hostlist" 
+            logging.debug("adding " + key + " to hostlist")
             h = Host(self, hostIP, hostPort)
             h.sendHello() # send helo to h
             self.hosts[key] = h
+            logging.debug(str(self.hosts.keys()))
             
     def checkStdIn(self):
         '''checkt ob in sdtIn geschrieben wird und
