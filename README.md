@@ -7,4 +7,6 @@ test
 ----
 python hachat.py
 
-python hachat.py IP Port
+python hachat.py [-l Link] [-p Port] [-n name] [-v verbose]
+    
+Link must be a hostname:port pair

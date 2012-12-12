@@ -48,7 +48,7 @@ class Host:
         '''send Message objects from Queue as string'''
         while True:
             time.sleep(1)
-            if self.msgQueue:
+            while self.msgQueue:
                 msg = self.msgQueue.popleft()
                 #convert to string to send over socket
                 msgStr = str(msg)
