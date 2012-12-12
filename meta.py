@@ -9,6 +9,8 @@ class meta:
      
      all methods should be called periodically, one after one for every host 
      from hostlist, to stabilize the network.
+     Log each request, if not answerd  (after a certain time/after a certain quantum of requests??) 
+     erase the Host from HostList. -> eraseHosts()
      
      ex:  30sec after starting Peer Host1 - peerList()
           1min after starting Peer Host2 - historyCheck()
@@ -23,9 +25,9 @@ class meta:
     def historyCheck(self):
         '''implements the History Checking-function:
         
-        1st: Request a List of the last 10 Msg-hashes of a/all the neighbour(s)
-            -> requestHistory()
-        2nd: neighbour(s) sends a List of the last 10 Msg-hashes if requested
+        1st: Request a List of the last 10 Msg-hashes of a the neighbour
+            log this -> requestHistory()
+        2nd: neighbour sends a List of the last 10 Msg-hashes if requested
             -> pushHistory()
         3rd: Check if given all(!) Hashes are in the HashHistory and
             if not, request the missing Msgs 
@@ -37,7 +39,7 @@ class meta:
         
         1st: Check the HostList of the Peer, if this contains less then 5 Hosts
             request a subset (containing (5 - len(HostList) + 2) Hosts or so) of a
-            neighbours HostList
+            neighbours HostList, log request.
             -> requestPeers()
         2nd: If incoming Request, choose a random subset (quality as described above)
             of own HostList and send it back as a List.
@@ -46,10 +48,14 @@ class meta:
             add not-containing Hosts.
             -> CompAndAddHosts()'''
         pass
+        
+    def eraseHosts(self, host):
+        '''Check if requests for a certain Host is answered and if not erase Host from HostList'''
+        pass
     
     
     def requestHistroy(self, neighbour, quant=10):
-        '''asks neighbour for its Hash-History'''
+        '''asks neighbour for its Hash-History and log request'''
         pass            
         
         
@@ -77,4 +83,3 @@ class meta:
     
     def CompAndAddHosts(self):
         pass
-                        
