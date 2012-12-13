@@ -29,7 +29,7 @@ class meta:
             log this -> requestHistory()
         2nd: neighbour sends a List of the last 10 Msg-hashes if requested
             -> pushHistory()
-        3rd: Check if given all(!) Hashes are in the HashHistory and
+        3rd: Check if all(!) given Hashes are in the HashHistory and
             if not, request the missing Msgs 
             -> requestMissingMsgs()'''
         pass
