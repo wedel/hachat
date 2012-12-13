@@ -6,6 +6,7 @@ import logging
 import re
 import random
 from peer import Peer
+import message
 
 parser = argparse.ArgumentParser(description="start peer with arguments")
 parser.add_argument("-p", "--port", help="Port to listen on")
@@ -29,3 +30,8 @@ if args.link != None:
     peer = Peer(firstHost = (hostIP, hostPort), port = args.port, name = name)
 else:
     peer = Peer(port = args.port, name = name)
+
+
+while True:
+    msgstring = raw_input(name + ": ") # wird dies an alle in der liste verteilt
+    peer.sendText(msgstring)

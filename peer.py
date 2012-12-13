@@ -4,11 +4,10 @@
 import socket
 import threading
 import message
-import sys
-import select
 import time
 from host import Host
 import logging
+
 
 class Peer:
     """ Peer Klasse """
@@ -43,16 +42,10 @@ class Peer:
             h = Host(self, hostIP, hostPort)
             h.sendHello()
             
-        try: #lesen von stdIn als Thread...
-            self.keyboardThread = threading.Thread(target=self.checkStdIn) 
-            self.keyboardThread.daemon = True
-            self.keyboardThread.start()
-        except (KeyboardInterrupt,SystemExit):
-            print "Quitting Peer.."
         self.history = message.History(2,10)
-        self.startRecvLoop()
-   
-        
+        self.recvThread = threading.Thread(target=self.startRecvLoop)
+        self.recvThread.daemon = True
+        self.recvThread.start()
 
     def startRecvLoop(self):
         ''' general recieve loop of a peer '''
@@ -85,6 +78,12 @@ class Peer:
         except KeyboardInterrupt:
             print "Quitting.."
 
+    def sendText(self, text):
+            for h in self.hosts.values():
+                #print "trying to send msg to %s:%s" %(recIP,recPort)
+                msg = message.TextMessage(self.name, text)
+                h.addToMsgQueue(msg)
+
     def forwardMsg(self,msg):
         if len(self.hosts) > 0:
             for h in self.hosts.values():
@@ -109,24 +108,6 @@ class Peer:
             self.hosts[key] = h
             logging.debug(str(self.hosts.keys()))
             
-    def checkStdIn(self):
-        '''checkt ob in sdtIn geschrieben wird und
-        sendet dann alle peers aus host-liste die nachricht
-        wird als thread gerufen, scheint so ueblich zu sein, sihe
-        http://stackoverflow.com/questions/292095/polling-the-keyboard-in-python'''
-        #print "checkStdIn called"
-        while True:
-            try:
-                i,o,e = select.select([sys.stdin],[],[],0.0001) #checkt ob irgendwas auf sdtIN
-            except:
-                raise 'could not read from stdIn'                
-            for s in i:
-                if s == sys.stdin and len(self.hosts) > 0: #falls, und hosts in der liste, so
-                    msgstring = sys.stdin.readline() # wird dies an alle in der liste verteilt
-                    for h in self.hosts.values():
-                        #print "trying to send msg to %s:%s" %(recIP,recPort)
-                        msg = message.TextMessage(self.name, msgstring)
-                        h.addToMsgQueue(msg)
 
 
     def __del__(self):

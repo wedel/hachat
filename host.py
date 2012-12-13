@@ -47,7 +47,7 @@ class Host:
     def startSendLoop(self):
         '''send Message objects from Queue as string'''
         while True:
-            time.sleep(1)
+            time.sleep(0.1)
             while self.msgQueue:
                 msg = self.msgQueue.popleft()
                 #convert to string to send over socket
