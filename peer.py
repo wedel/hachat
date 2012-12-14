@@ -75,8 +75,6 @@ class Peer:
                     
         except Exception, e:
             print "Error: ", e
-        except KeyboardInterrupt:
-            print "Quitting.."
 
     def sendText(self, text):
             for h in self.hosts.values():

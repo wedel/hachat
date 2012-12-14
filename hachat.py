@@ -32,5 +32,9 @@ else:
 
 
 while True:
-    msgstring = raw_input(name + ": ") # wird dies an alle in der liste verteilt
-    peer.sendText(msgstring)
+    try:
+        msgstring = raw_input(name + ": ") # wird dies an alle in der liste verteilt
+        peer.sendText(msgstring)
+    except KeyboardInterrupt:
+        print "Quitting..."
+        break

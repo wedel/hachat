@@ -34,7 +34,7 @@ class Host:
             self.sendThread = threading.Thread(target=self.startSendLoop) 
             self.sendThread.daemon = True
             self.sendThread.start()
-        except (KeyboardInterrupt,SystemExit):
+        except (SystemExit):
             print "Quitting.."
 
 
