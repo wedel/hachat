@@ -7,4 +7,3 @@ TextMessages splitten ind TextMessage.__init()__
 über peers austauschen
 history check der letzten x nachrichten der nachbarn
 Klassenvariablen zu Objektvariablen
-KeyboardInterupts nur in hachat.py
