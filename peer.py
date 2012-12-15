@@ -60,7 +60,7 @@ class Peer:
         ''' general recieve loop of a peer '''
         print "RecvLoop started"
         try:
-            while True:
+            while not self.gui.stop:
                 (data, addr) = self.inSocket.recvfrom(self.BUFSIZE)
                 # try to build Message object and decide what to do with it based on type
                 try:

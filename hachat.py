@@ -31,10 +31,7 @@ else:
     peer = Peer(port = args.port, name = name)
 
 
-while True:
-    try:
-        msgstring = raw_input(name + ": ") # wird dies an alle in der liste verteilt
-        peer.sendText(msgstring)
-    except KeyboardInterrupt:
-        print "Quitting..."
-        break
+
+
+   
+

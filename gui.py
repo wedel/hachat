@@ -12,6 +12,8 @@ class gui(object):
         self.root = Tk()
         self.root.title('HaChat v0.1')
         self.parent = parent
+        
+        self.stop = False
                 
         self.fpopup = Frame(self.root,width=500) 
         self.fpopup.pack(expand=1, fill=BOTH) 
@@ -50,6 +52,7 @@ class gui(object):
         self.ende()
 
     def ende(self):
+        self.stop = True
         logging.debug("Quitting...")
         self.root.destroy()
 
