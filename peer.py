@@ -7,6 +7,8 @@ import message
 import time
 from host import Host
 import logging
+import gui
+
 
 
 class Peer:
@@ -42,13 +44,21 @@ class Peer:
             h = Host(self, hostIP, hostPort)
             h.sendHello()
             
-        self.history = message.History(2,10)
+        self.history = message.History(10,100)
+        
+        self.gui = gui.gui(self)
+        
         self.recvThread = threading.Thread(target=self.startRecvLoop)
         self.recvThread.daemon = True
         self.recvThread.start()
+        #start gui
+        self.gui.run()
+                
+
 
     def startRecvLoop(self):
         ''' general recieve loop of a peer '''
+        print "RecvLoop started"
         try:
             while True:
                 (data, addr) = self.inSocket.recvfrom(self.BUFSIZE)
@@ -68,7 +78,8 @@ class Peer:
                     if not self.history.msgExists(msg) and msg.name != self.name:
                         self.history.addMsg(msg)
                         self.forwardMsg(msg)
-                        print msg.name + ":",  msg.text                    
+                        self.gui.empfang(msg) #gibt nachricht an gui weiter 
+                        logging.debug("received " + msg.text + " from " + msg.name)   
                 else:
                     print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
                     print type(msg)
@@ -85,7 +96,7 @@ class Peer:
     def forwardMsg(self,msg):
         if len(self.hosts) > 0:
             for h in self.hosts.values():
-                logging.debug("Message" + msg.text + "will be forwarded")
+                #logging.debug("Message " + msg.text + " will be forwarded")
                 h.addToMsgQueue(msg)
         else:
             logging.debug("Peer %s:%d: No peer in HostList, can not forward msg" %(self.ip, self.port))
@@ -105,8 +116,6 @@ class Peer:
             h.sendHello() # send helo to h
             self.hosts[key] = h
             logging.debug(str(self.hosts.keys()))
-            
-
 
     def __del__(self):
         self.inSocket.close()
