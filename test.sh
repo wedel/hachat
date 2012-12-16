@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# this script will start 4 HaChat Clients for testing purpose
+# this script will start 5 HaChat Clients for testing purpose
 
 port1=5001
 port2=5002
