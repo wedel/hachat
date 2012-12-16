@@ -10,7 +10,7 @@ class gui(object):
     
     def __init__(self, parent):
         self.root = Tk()
-        self.root.title('HaChat v0.1')
+        self.root.title('HaChat v0.1: %s' %(parent.name))
         self.parent = parent
         
         self.stop = False
