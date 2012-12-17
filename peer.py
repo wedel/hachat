@@ -88,6 +88,7 @@ class Peer:
             print "Error: ", e
 
     def sendText(self, text):
+        if text != "":
             for h in self.hosts.values():
                 #print "trying to send msg to %s:%s" %(recIP,recPort)
                 msg = message.TextMessage(self.name, text)
