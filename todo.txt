@@ -4,6 +4,6 @@ TODO
 # TextMessages weiterleiten
 TextMessages splitten ind TextMessage.__init()__
 
-über peers austauschen
+über peers austauschen (moritz)
 history check der letzten x nachrichten der nachbarn
 Klassenvariablen zu Objektvariablen
