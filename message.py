@@ -63,18 +63,18 @@ class HistReqMessage(Message):
         '''HistReqMessages are sent when a peer wants to request the history of another peer. quantity is the number of history entries the other peer should send uns back.
         Message layout: | HEAD | type | uid | quantity | '''
     
-        def __init__(self, quantity, uid=None)
+        def __init__(self, quantity, uid=None):
                 super(HistReqMessage, self).__init__(uid)
                 self.type = "HISTREQ"
                 
                 # set recipient and sender
-                if quantity == None 
+                if quantity == None:
                         raise Exception("HistReqMessage needs quantity!")
                 else:
                         self.reqQuant = quantity
         def __str__(self):
                 '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), str(self.reqQuant])
+                string = ",".join([self.HEAD, self.type, str(self.uid), str(self.reqQuant)])
                 return string
                 
 class TextMessage(Message):
@@ -133,7 +133,7 @@ def toMessage(string):
                 except Exception, e:
                         raise MessageException("malformed HeloMessage recieved")
                         print e
-        elif type == "HISTREQ"
+        elif type == "HISTREQ":
                 try:
                     quantity = int(rest)
                     msg = HistReqMessage(uid, quantity)
