@@ -6,6 +6,8 @@ import time
 import logging
 import threading 
 
+CODEC = 'utf8'
+
 class gui(object):
     
     def __init__(self, parent):
@@ -60,7 +62,7 @@ class gui(object):
         self.senden()
         
     def senden(self):
-        msg = self.eingabe.get()
+        msg = self.eingabe.get().encode(CODEC)
         self.textfenster.insert(END,self.parent.name+": "+msg+'\n')
         self.textfenster.see(END)    
         self.eingabe.delete('0',END)
