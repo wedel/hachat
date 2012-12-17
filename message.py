@@ -1,6 +1,7 @@
 # coding=utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
+import const
 import re
 import random
 import hashlib
@@ -8,7 +9,7 @@ from collections import OrderedDict, deque
 import logging
 
 class Message(object): # inherit from object
-        HEAD = "HACHAT VER0.1"
+        HEAD = const.HACHAT_HEADER
         type = None
         uid = None
         #msgstring = None
@@ -115,7 +116,7 @@ def toMessage(string):
                 raise MessageException("malformed Message recieved")
                 
          # check if Hachat Message
-        if HEAD != "HACHAT VER0.1":
+        if HEAD != const.HACHAT_HEADER:
                 raise MessageException("wrong Header: " + HEAD)
                 
         # decide on type of message        

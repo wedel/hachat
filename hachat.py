@@ -6,7 +6,9 @@ import argparse
 import logging
 import re
 import random
+import const
 from peer import Peer
+
 
 parser = argparse.ArgumentParser(description="start peer with arguments")
 parser.add_argument("-p", "--port", help="Port to listen on")

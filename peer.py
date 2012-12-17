@@ -1,6 +1,7 @@
 # coding=utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
+import const
 import socket
 import threading
 import message
@@ -61,7 +62,7 @@ class Peer:
         print "RecvLoop started"
         try:
             while not self.gui.stop:
-                (data, addr) = self.inSocket.recvfrom(self.BUFSIZE)
+                (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
                 # try to build Message object and decide what to do with it based on type
                 try:
                     msg = message.toMessage(data)

@@ -1,3 +1,4 @@
+import const
 from Tkinter import *
 from ScrolledText import *
 import tkMessageBox
@@ -12,7 +13,7 @@ class gui(object):
     
     def __init__(self, parent):
         self.root = Tk()
-        self.root.title('HaChat v0.1: %s' %(parent.name))
+        self.root.title('HaChat v' + str(const.HACHAT_VERSION) + ': ' + parent.name)
         self.parent = parent
         
         self.stop = False
