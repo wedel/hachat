@@ -31,12 +31,12 @@ class HeloMessage(Message):
         '''regularly sent HELO Message which exchange information on IP and Port
         Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderPort | '''
         
-        recipientIP = None
-        recipientPort = None
-        # senderIP = None
-        senderPort = None
         
         def __init__(self, recipientIP, recipientPort, senderPort, uid=None):
+                self.recipientIP = None
+                self.recipientPort = None
+                self.# senderIP = None
+                self.senderPort = None
                 super(HeloMessage, self).__init__(uid)
                 self.type = "HELO"
                 
@@ -58,6 +58,24 @@ class HeloMessage(Message):
                 '''implements interface'''
                 # string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
                 string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort)])
+                return string
+
+class HistReqMessage(Message):
+        '''HistReqMessages are sent when a peer wants to request the history of another peer. quantity is the number of history entries the other peer should send uns back.
+        Message layout: | HEAD | type | uid | quantity | '''
+    
+        def __init__(self, quantity, uid=None)
+                super(HistReqMessage, self).__init__(uid)
+                self.type = "HISTREQ"
+                
+                # set recipient and sender
+                if quantity == None 
+                        raise Exception("HistReqMessage needs quantity!")
+                else:
+                        self.reqQuant = quantity
+        def __str__(self):
+                '''implements interface'''
+                string = ",".join([self.HEAD, self.type, str(self.uid), str(self.reqQuant])
                 return string
                 
 class TextMessage(Message):
@@ -115,6 +133,15 @@ def toMessage(string):
                         
                 except Exception, e:
                         raise MessageException("malformed HeloMessage recieved")
+                        print e
+        elif type == "HISTREQ"
+                try:
+                    quantity = int(rest)
+                    msg = HistReqMessage(uid, quantity)
+                    return msg
+
+                except Exception, e:
+                        raise MessageException("malformed HistReqMessage recieved")
                         print e
                         
                 
