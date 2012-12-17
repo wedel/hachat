@@ -35,7 +35,6 @@ class HeloMessage(Message):
         def __init__(self, recipientIP, recipientPort, senderPort, uid=None):
                 self.recipientIP = None
                 self.recipientPort = None
-                self.# senderIP = None
                 self.senderPort = None
                 super(HeloMessage, self).__init__(uid)
                 self.type = "HELO"
