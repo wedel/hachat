@@ -21,6 +21,9 @@ class Host:
 
     def __init__(self, myPeer, hostIP, hostPort):
         
+        # variable to check you get regularly helo
+        self.lastSeen = 1
+        
         # init own msgQueue
         self.msgQueue = deque()
         
@@ -31,6 +34,7 @@ class Host:
         
         # start send thread
         try: 
+            self.stop = threading.Event()
             self.sendThread = threading.Thread(target=self.startSendLoop) 
             self.sendThread.daemon = True
             self.sendThread.start()
@@ -46,7 +50,7 @@ class Host:
 
     def startSendLoop(self):
         '''send Message objects from Queue as string'''
-        while True:
+        while(not self.stop.is_set()): # as long as stop-Event is not set
             time.sleep(0.1)
             while self.msgQueue:
                 msg = self.msgQueue.popleft()
@@ -66,4 +70,4 @@ class Host:
 
     def __del__(self):
         self.outSocket.close()
-        self.thread.stop()
+        self.stop.set()

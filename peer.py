@@ -49,9 +49,20 @@ class Peer:
         
         self.gui = gui.gui(self)
         
+        # lock for hostlist (not needed atm)
+        # self.hostlock = threading.RLock()
+        
+        # start recieveLoop
         self.recvThread = threading.Thread(target=self.startRecvLoop)
         self.recvThread.daemon = True
         self.recvThread.start()
+        
+        # start maintenance Loop
+        self.counter = 0
+        self.mThread = threading.Thread(target=self.maintenanceLoop)
+        self.mThread.daemon = True
+        self.mThread.start()
+        
         #start gui
         self.gui.run()
                 
@@ -110,14 +121,43 @@ class Peer:
         key = hostIP + ':' + str(hostPort) # construct key
         
         if key in self.hosts:
-            logging.debug(key + " already in hostlist")
+            host = self.hosts[key]
+            host.lastSeen = 1 #
+            logging.debug(key + " already in hostlist - refreshing lastSeen")
         else:
             #insert in host dict
             logging.debug("adding " + key + " to hostlist")
             h = Host(self, hostIP, hostPort)
             h.sendHello() # send helo to h
+            #self.hostlock.acquire()
             self.hosts[key] = h
+            #self.hostlock.release()
             logging.debug(str(self.hosts.keys()))
 
     def __del__(self):
         self.inSocket.close()
+    
+    def maintenanceLoop(self):
+        while True:
+            time.sleep(const.MAINTENANCE_SLEEP)
+            logging.debug("maintenance start")
+            logging.debug("counter: " + str(self.counter))
+            
+            # every 3 maintenance loops check if you have to delete host
+            if self.counter == 2:
+                temp = self.hosts.keys()
+                for key in temp:
+                    host = self.hosts[key]
+                    if host.lastSeen == 0:
+                        logging.debug("deleting host " + key)
+                        host.__del__()
+                        del self.hosts[key]
+                    else:
+                        host.lastSeen = 0 # reset lastSeen
+                
+            # send HELO from all hosts in hostlist
+            for h in self.hosts.values():
+                h.sendHello()
+
+            self.counter = (self.counter + 1) % 3
+            logging.debug("maintenance end")
