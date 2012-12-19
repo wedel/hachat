@@ -38,12 +38,6 @@ class Peer:
             
         self.port = int(self.inSocket.getsockname()[1])
         print "Listening on port", self.port
-        
-        # send HELO to first host if you know one
-        if firstHost != None:
-            (hostIP, hostPort) = firstHost
-            h = Host(self, hostIP, hostPort)
-            h.sendHello()
             
         self.history = message.History(10,100)
         
@@ -57,11 +51,24 @@ class Peer:
         self.recvThread.daemon = True
         self.recvThread.start()
         
+        # start sendLoop
+        self.sThread = threading.Thread(target=self.sendLoop)
+        self.sThread.daemon = True
+        self.sThread.start()
+        
         # start maintenance Loop
         self.counter = 0
         self.mThread = threading.Thread(target=self.maintenanceLoop)
         self.mThread.daemon = True
         self.mThread.start()
+        
+        # send HELO to first host if you know one
+        if firstHost != None:
+            (hostIP, hostPort) = firstHost
+            key = self.constructKey(hostIP, hostPort)
+            h = Host(self, hostIP, hostPort)
+            h.sendHello()
+            self.hosts[key] = h
         
         #start gui
         self.gui.run()
@@ -70,7 +77,7 @@ class Peer:
 
     def startRecvLoop(self):
         ''' general recieve loop of a peer '''
-        print "RecvLoop started"
+        logging.debug("RecvLoop started")
         try:
             while not self.gui.stop:
                 (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
@@ -118,7 +125,7 @@ class Peer:
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
         (hostIP, hostPort) = addr
-        key = hostIP + ':' + str(hostPort) # construct key
+        key = self.constructKey(hostIP, hostPort)
         
         if key in self.hosts:
             host = self.hosts[key]
@@ -161,3 +168,29 @@ class Peer:
 
             self.counter = (self.counter + 1) % 3
             logging.debug("maintenance end")
+            
+    def sendLoop(self):
+        '''send Message objects of all hosts from Queue as string'''
+        logging.debug("starting sendLoop")
+        while True:
+            time.sleep(0.1)
+            for host in self.hosts.values():
+                while host.msgQueue:
+                    msg = host.msgQueue.popleft()
+                    #convert to string to send over socket
+                    msgStr = str(msg)
+                    logging.debug("tring to send msg: %s to %s" %(msgStr, host.hostIP))
+                    host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
+                    
+    def constructKey(self, hostIP, hostPort):
+        '''construct key to identify hosts in hostlist'''
+        if hostIP == "localhost" or hostIP == "127.0.1.1":
+            ip = "127.0.0.1"
+        else:
+            ip = hostIP
+            
+        port = str(hostPort)
+        
+        key = ip + ':' + port
+        
+        return key

@@ -7,3 +7,5 @@ TextMessages splitten ind TextMessage.__init()__
 über peers austauschen (moritz)
 history check der letzten x nachrichten der nachbarn
 Klassenvariablen zu Objektvariablen
+
+was ist wenn host über verschiedene Subnetze erreichbar ist? - sollten wir vllt noch einen besseren Identifier einfügen?

@@ -11,13 +11,10 @@ import logging
 
 class Host:
     '''Class representing a connection to another peer'''
-    myPeer = None
-    hostIP = None # IP of recipient
-    outSocket = None
-    inPort = 0
-    hostPort = 0 # port of recipient
-    sendThread = None
-    # msgQueue = deque()
+    #myPeer = None
+    #hostIP = None # IP of recipient
+    #hostPort = 0 # port of recipient
+    #outSocket = None
 
     def __init__(self, myPeer, hostIP, hostPort):
         
@@ -29,36 +26,14 @@ class Host:
         
         self.outSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.myPeer = myPeer
-        self.hostIP = hostIP
-        self.hostPort = int(hostPort)
-        
-        # start send thread
-        try: 
-            self.stop = threading.Event()
-            self.sendThread = threading.Thread(target=self.startSendLoop) 
-            self.sendThread.daemon = True
-            self.sendThread.start()
-        except (SystemExit):
-            print "Quitting.."
-
+        self.hostIP = hostIP # IP of recipient
+        self.hostPort = int(hostPort) # port of recipient
 
     def sendHello(self):
         #print 'called sendhello method'
         # helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port)
         helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.port)
-        self.addToMsgQueue(helo)
-
-    def startSendLoop(self):
-        '''send Message objects from Queue as string'''
-        while(not self.stop.is_set()): # as long as stop-Event is not set
-            time.sleep(0.1)
-            while self.msgQueue:
-                msg = self.msgQueue.popleft()
-                #convert to string to send over socket
-                msgStr = str(msg)
-                logging.debug("tring to send msg: %s to %s" %(msgStr, self.hostIP))
-                self.outSocket.sendto(msgStr, (self.hostIP, self.hostPort))
-                
+        self.addToMsgQueue(helo)                
                 
     def addToMsgQueue(self, msg):
         '''check if message is type Message and add to Queue'''
@@ -70,4 +45,3 @@ class Host:
 
     def __del__(self):
         self.outSocket.close()
-        self.stop.set()
