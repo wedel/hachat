@@ -107,6 +107,20 @@ class TextMessage(Message):
                 string = ",".join([self.HEAD, self.type, str(self.uid), self.hash, self.name, self.ip, str(self.port), self.text])
                 return string
                 
+class ByeMessage(Message):
+        '''Message Type to be send when leaving'''
+        
+        def __init__(self, ip, port, uid=None):
+                super(ByeMessage, self).__init__(uid)
+                self.type = "BYE"
+                self.ip = ip
+                self.port = port
+        
+        def __str__(self):
+                '''implements interface'''
+                string = ",".join([self.HEAD, self.type, str(self.uid), self.ip, str(self.port)])
+                return string
+                
 
 def toMessage(string):
         '''construct Message type from string'''
@@ -163,6 +177,15 @@ def toMessage(string):
                         raise MessageException("TextMessage has wrong hash")
                 else:
                         return msg # return good TextMessage
+                        
+        elif type == "BYE":
+                try:
+                        (ip, port) = re.split(',', rest, 1) # get rest of message
+                except Exception, e:
+                        raise MessageException("malformed ByeMessage recieved")
+                
+                msg = ByeMessage(ip, port, uid)
+                return msg
                 
         else:
                 raise MessageException("unknown type of message")

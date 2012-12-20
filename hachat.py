@@ -8,6 +8,7 @@ import re
 import random
 import const
 from peer import Peer
+import time
 
 
 parser = argparse.ArgumentParser(description="start peer with arguments")
@@ -38,8 +39,8 @@ else:
     else:
         print "You need a link or your own ip adress to start hachat!"
 
-
-
+peer.__del__()
+time.sleep(1)
 
    
 

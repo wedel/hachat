@@ -65,4 +65,8 @@ class Host:
             raise Exception("Will only send Message objects!")
 
     def __del__(self):
+        # wait until Queue empty
+        while self.msgQueue:
+            pass
+        time.sleep(0.5)
         self.outSocket.close()

@@ -79,51 +79,57 @@ class Peer:
     def startRecvLoop(self):
         ''' general recieve loop of a peer '''
         logging.debug("RecvLoop started")
-        try:
-            while not self.gui.stop:
-                (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
-                # try to build Message object and decide what to do with it based on type
-                try:
-                    msg = message.toMessage(data)
-                except message.MessageException, e:
-                    print e
+        while not self.gui.stop:
+            (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
+            # try to build Message object and decide what to do with it based on type
+            try:
+                msg = message.toMessage(data)
+            except message.MessageException, e:
+                logging.warn("unrecocnized message " + str(e))
+                
+            if isinstance(msg, message.HeloMessage):
+                # set your own ip if you dont know it
+                if self.ip == "null":
+                    self.ip = msg.recipientIP
+                
+                # add new host to hostlist
+                senderIP = addr[0]
+                inputaddr = (senderIP,  msg.senderPort)
+                logging.debug("received: HELO from " + str(inputaddr))
+                self.addToHosts(inputaddr) 
+                
+            elif isinstance(msg, message.TextMessage):
+                if not self.history.msgExists(msg) : # if i don't already know message
+                    self.history.addMsg(msg)
+                    self.forwardMsg(msg)
+                    self.gui.empfang(msg) #gibt nachricht an gui weiter 
                     
-                if isinstance(msg, message.HeloMessage):
-                    # set your own ip if you dont know it
-                    if self.ip == "null":
-                        self.ip = msg.recipientIP
+                    # add host to remindlist
+                    key = Host.constructKey(msg.ip, msg.port)
+                    self.remindList[key] = msg.name
+                    self.hosts[key].lastSeen = 1
+                    #logging.debug(str(self.remindList.keys()))
                     
-                    # add new host to hostlist
-                    senderIP = addr[0]
-                    inputaddr = (senderIP,  msg.senderPort)
-                    logging.debug("received: HELO from " + str(inputaddr))
-                    self.addToHosts(inputaddr) 
+                    logging.debug("received " + msg.text + " from " + msg.name)
                     
-                elif isinstance(msg, message.TextMessage):
-                    if not self.history.msgExists(msg) : # if i don't already know message
-                        self.history.addMsg(msg)
-                        self.forwardMsg(msg)
-                        self.gui.empfang(msg) #gibt nachricht an gui weiter 
-                        
-                        # add host to remindlist
-                        key = Host.constructKey(msg.ip, msg.port)
-                        self.remindList[key] = msg.name
-                        self.hosts[key].lastSeen = 1
-                        #logging.debug(str(self.remindList.keys()))
-                        
-                        logging.debug("received " + msg.text + " from " + msg.name)   
-                else:
-                    print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
-                    print type(msg)
+            elif isinstance(msg, message.ByeMessage):
+                key = Host.constructKey(msg.ip, msg.port)
+                if key in self.hosts:
+                    del self.hosts[key]
+                if key in self.remindList:
+                    del self.remindList[key]
+                logging.debug("recieved BYE, deleting " + key)
                     
-        except Exception, e:
-            print "Error: ", e
+            else:
+                logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
+                logging.warn(type(msg))
+
 
     def sendText(self, text):
         if text != "":
+            msg = message.TextMessage(self.name, self.ip, self.port, text)
             for h in self.hosts.values():
                 #print "trying to send msg to %s:%s" %(recIP,recPort)
-                msg = message.TextMessage(self.name, self.ip, self.port, text)
                 self.history.addMsg(msg) # add to own history
                 h.addToMsgQueue(msg)
 
@@ -150,9 +156,6 @@ class Peer:
             logging.debug("adding " + key + " to hostlist")
             h = Host(hostIP, hostPort)
             #logging.debug(str(self.hosts.keys()))
-
-    def __del__(self):
-        self.inSocket.close()
     
     def maintenanceLoop(self):
         while True:
@@ -192,3 +195,14 @@ class Peer:
                     msgStr = str(msg)
                     logging.debug("sending msg: %s to %s" %(msgStr, host.hostIP))
                     host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
+    
+    
+    def __del__(self):
+        # tell other peers to delete your host
+        logging.debug("sending BYE")
+        msg = message.ByeMessage(self.ip, self.port)
+        for h in self.hosts.values():
+            h.addToMsgQueue(msg)
+            h.__del__()
+            
+        self.inSocket.close()
