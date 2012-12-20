@@ -18,13 +18,17 @@ class Peer:
     BUFSIZE = 1024 # Größe unseres Buffers
 
     inSocket = None # Socket für eingehende Verbindungen
-    ip = None # IP des Peers
-    port = None # Port auf dem der Peer hört
     hosts = {} # Dict. der bekannten Hosts
 
-    def __init__(self, firstHost = None, port = None, name = "temp"):
+    def __init__(self, firstHost = None, port = None, name = "temp", ip = None):
         
         self.name = name # set peer name
+        
+        # set own ip if you already know it
+        if ip != None:
+            self.ip = ip
+        else:
+            self.ip = "null"
         
         # open socket
         self.inSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -35,8 +39,8 @@ class Peer:
             # bind on given port
             self.inSocket.bind(('', int(port)))
             
-        self.port = int(self.inSocket.getsockname()[1])
-        print "Listening on port", self.port
+        self.port = int(self.inSocket.getsockname()[1]) # port where peer listens on
+        logging.info("Listening on port " + str(self.port))
             
         self.history = message.History(10,100)
         
@@ -87,6 +91,11 @@ class Peer:
                     print e
                     
                 if isinstance(msg, message.HeloMessage):
+                    # set your own ip if you dont know it
+                    if self.ip == "null":
+                        self.ip = msg.recipientIP
+                    
+                    # add new host to hostlist
                     senderIP = addr[0]
                     inputaddr = (senderIP,  msg.senderPort)
                     logging.debug("received: HELO from " + str(inputaddr))
@@ -109,7 +118,7 @@ class Peer:
         if text != "":
             for h in self.hosts.values():
                 #print "trying to send msg to %s:%s" %(recIP,recPort)
-                msg = message.TextMessage(self.name, text)
+                msg = message.TextMessage(self.name, self.ip, self.port, text)
                 h.addToMsgQueue(msg)
 
     def forwardMsg(self,msg):

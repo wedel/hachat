@@ -11,10 +11,12 @@ from peer import Peer
 
 
 parser = argparse.ArgumentParser(description="start peer with arguments")
-parser.add_argument("-p", "--port", help="Port to listen on")
-parser.add_argument("-l", "--link", help="hachat link (ex. localhost:12345)")
-parser.add_argument("-n", "--name", help="set own name")
 parser.add_argument("-v", "--verbose", action="store_true", default=False, help="show p2p-information")
+parser.add_argument("-l", "--link", help="hachat link (ex. localhost:12345)")
+parser.add_argument("-p", "--port", help="Port to listen on")
+parser.add_argument("-n", "--name", help="set own name")
+parser.add_argument("-i", "--ip", help="ip-adresse where you can be reached")
+
 args = parser.parse_args()
 
 # initialise logger
@@ -31,7 +33,10 @@ if args.link != None:
     (hostIP, hostPort) = re.split(":", args.link, 1)
     peer = Peer(firstHost = (hostIP, hostPort), port = args.port, name = name)
 else:
-    peer = Peer(port = args.port, name = name)
+    if args.ip:
+        peer = Peer(ip = args.ip, port = args.port, name = name)
+    else:
+        print "You need a link or your own ip adress to start hachat!"
 
 
 
