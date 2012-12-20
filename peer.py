@@ -108,6 +108,7 @@ class Peer:
                         # add host to remindlist
                         key = Host.constructKey(msg.ip, msg.port)
                         self.remindList[key] = msg.name
+                        self.hosts[key].lastSeen = 1
                         #logging.debug(str(self.remindList.keys()))
                         
                         logging.debug("received " + msg.text + " from " + msg.name)   
