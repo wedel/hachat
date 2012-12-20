@@ -159,7 +159,8 @@ class Peer:
                 
             # send HELO from all hosts in hostlist
             for h in self.hosts.values():
-                h.sendHello()
+                if h.lastSeen == 0: # but only if you haven't seen him for a while
+                    h.sendHello()
 
             self.counter = (self.counter + 1) % 3
             logging.debug("maintenance end")
