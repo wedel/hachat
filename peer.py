@@ -21,7 +21,6 @@ class Peer:
     ip = None # IP des Peers
     port = None # Port auf dem der Peer hört
     hosts = {} # Dict. der bekannten Hosts
-    name = None
 
     def __init__(self, firstHost = None, port = None, name = "temp"):
         
@@ -62,13 +61,13 @@ class Peer:
         self.mThread.daemon = True
         self.mThread.start()
         
+        # initialise Host Class
+        Host.myPeer = self
+        
         # send HELO to first host if you know one
         if firstHost != None:
             (hostIP, hostPort) = firstHost
-            key = self.constructKey(hostIP, hostPort)
-            h = Host(self, hostIP, hostPort)
-            h.sendHello()
-            self.hosts[key] = h
+            h = Host(hostIP, hostPort)
         
         #start gui
         self.gui.run()
@@ -125,21 +124,17 @@ class Peer:
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
         (hostIP, hostPort) = addr
-        key = self.constructKey(hostIP, hostPort)
+        key = Host.constructKey(hostIP, hostPort)
         
         if key in self.hosts:
             host = self.hosts[key]
-            host.lastSeen = 1 #
+            host.lastSeen = 1 # set status that Host had contact
             logging.debug(key + " already in hostlist - refreshing lastSeen")
         else:
             #insert in host dict
             logging.debug("adding " + key + " to hostlist")
-            h = Host(self, hostIP, hostPort)
-            h.sendHello() # send helo to h
-            #self.hostlock.acquire()
-            self.hosts[key] = h
-            #self.hostlock.release()
-            logging.debug(str(self.hosts.keys()))
+            h = Host(hostIP, hostPort)
+            #logging.debug(str(self.hosts.keys()))
 
     def __del__(self):
         self.inSocket.close()
@@ -179,18 +174,5 @@ class Peer:
                     msg = host.msgQueue.popleft()
                     #convert to string to send over socket
                     msgStr = str(msg)
-                    logging.debug("tring to send msg: %s to %s" %(msgStr, host.hostIP))
+                    logging.debug("sending msg: %s to %s" %(msgStr, host.hostIP))
                     host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
-                    
-    def constructKey(self, hostIP, hostPort):
-        '''construct key to identify hosts in hostlist'''
-        if hostIP == "localhost" or hostIP == "127.0.1.1":
-            ip = "127.0.0.1"
-        else:
-            ip = hostIP
-            
-        port = str(hostPort)
-        
-        key = ip + ':' + port
-        
-        return key

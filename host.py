@@ -11,12 +11,25 @@ import logging
 
 class Host:
     '''Class representing a connection to another peer'''
-    #myPeer = None
+    myPeer = None
     #hostIP = None # IP of recipient
     #hostPort = 0 # port of recipient
     #outSocket = None
+    
+    @classmethod
+    def constructKey(self, hostIP, hostPort):
+        '''Class method: construct key to identify hosts in hostlist'''
+        if hostIP == "localhost" or hostIP == "127.0.1.1":
+            ip = "127.0.0.1"
+        else:
+            ip = hostIP
+            
+        port = str(hostPort)
+        key = ip + ':' + port
+        
+        return key
 
-    def __init__(self, myPeer, hostIP, hostPort):
+    def __init__(self, hostIP, hostPort):
         
         # variable to check you get regularly helo
         self.lastSeen = 1
@@ -25,9 +38,17 @@ class Host:
         self.msgQueue = deque()
         
         self.outSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.myPeer = myPeer
         self.hostIP = hostIP # IP of recipient
         self.hostPort = int(hostPort) # port of recipient
+        
+        if Host.myPeer == None:
+            raise Exception("Host-Class needs peer")
+        else:
+            # add Host to its Peers Hostlist
+            key = Host.constructKey(hostIP, hostPort)
+            Host.myPeer.hosts[key] = self
+            self.sendHello() # send HELO to Host
+            
 
     def sendHello(self):
         #print 'called sendhello method'

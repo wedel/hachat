@@ -9,3 +9,7 @@ history check der letzten x nachrichten der nachbarn
 Klassenvariablen zu Objektvariablen
 
 was ist wenn host über verschiedene Subnetze erreichbar ist? - sollten wir vllt noch einen besseren Identifier einfügen?
+
+send BYE msg
+
+Hostlist in Host-Klasse?
