@@ -10,19 +10,17 @@ from host import Host
 import logging
 import gui
 
-
-
 class Peer:
     """ Peer Klasse """
-
+    
     BUFSIZE = 1024 # Größe unseres Buffers
-
-    inSocket = None # Socket für eingehende Verbindungen
-    hosts = {} # Dict. der bekannten Hosts
 
     def __init__(self, firstHost = None, port = None, name = "temp", ip = None):
         
         self.name = name # set peer name
+        self.inSocket = None # Socket für eingehende Verbindungen
+        self.hosts = {} # Dict. der bekannten Hosts
+        self.remindList = {} # Dict (ip:port) : name
         
         # set own ip if you already know it
         if ip != None:
@@ -102,10 +100,16 @@ class Peer:
                     self.addToHosts(inputaddr) 
                     
                 elif isinstance(msg, message.TextMessage):
-                    if not self.history.msgExists(msg) and msg.name != self.name:
+                    if not self.history.msgExists(msg) : # if i don't already know message
                         self.history.addMsg(msg)
                         self.forwardMsg(msg)
                         self.gui.empfang(msg) #gibt nachricht an gui weiter 
+                        
+                        # add host to remindlist
+                        key = Host.constructKey(msg.ip, msg.port)
+                        self.remindList[key] = msg.name
+                        #logging.debug(str(self.remindList.keys()))
+                        
                         logging.debug("received " + msg.text + " from " + msg.name)   
                 else:
                     print "hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen"
@@ -119,6 +123,7 @@ class Peer:
             for h in self.hosts.values():
                 #print "trying to send msg to %s:%s" %(recIP,recPort)
                 msg = message.TextMessage(self.name, self.ip, self.port, text)
+                self.history.addMsg(msg) # add to own history
                 h.addToMsgQueue(msg)
 
     def forwardMsg(self,msg):
