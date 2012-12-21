@@ -9,13 +9,12 @@ from collections import OrderedDict, deque
 import logging
 
 class Message(object): # inherit from object
-    HEAD = const.HACHAT_HEADER
-    type = None
-    uid = None
-    #msgstring = None
     def __init__(self, uid):
         ''' build Message with supplied uid
         or otherwise get a random uid'''
+        self.HEAD = const.HACHAT_HEADER
+        self.type = None
+        self.uid = None
         
         super(Message, self).__init__() # inherit from object
         # set unifier
@@ -201,10 +200,10 @@ class MessageException(Exception):
 class History:
     '''Klasse History speichert und ueberprueft Text-Msgs'''
 
-    msgDic = OrderedDict()  
-    hashDic = deque()
 
     def __init__(self, msgLimit=100, hashLimit=1000):
+        self.msgDic = OrderedDict()  
+        self.hashDic = deque()
         self.msgLimit = msgLimit
         self.hashLimit = hashLimit
         logging.debug("History applied")

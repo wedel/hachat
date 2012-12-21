@@ -11,10 +11,6 @@ import logging
 
 class Host:
     '''Class representing a connection to another peer'''
-    # myPeer = None
-    #hostIP = None # IP of recipient
-    #hostPort = 0 # port of recipient
-    #outSocket = None
     
     @classmethod
     def constructKey(self, hostIP, hostPort):

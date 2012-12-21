@@ -12,8 +12,6 @@ import gui
 
 class Peer:
     """ Peer Klasse """
-    
-    BUFSIZE = 1024 # Größe unseres Buffers
 
     def __init__(self, firstHost = None, port = None, name = "temp", ip = None):
         
