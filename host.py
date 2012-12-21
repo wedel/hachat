@@ -11,7 +11,7 @@ import logging
 
 class Host:
     '''Class representing a connection to another peer'''
-    myPeer = None
+    # myPeer = None
     #hostIP = None # IP of recipient
     #hostPort = 0 # port of recipient
     #outSocket = None
@@ -29,8 +29,11 @@ class Host:
         
         return key
 
-    def __init__(self, hostIP, hostPort):
+    def __init__(self, peer, hostIP, hostPort):
         
+        # set myPeer:
+        self.myPeer = peer
+
         # variable to check you get regularly helo
         self.lastSeen = 1
         
@@ -41,12 +44,12 @@ class Host:
         self.hostIP = hostIP # IP of recipient
         self.hostPort = int(hostPort) # port of recipient
         
-        if Host.myPeer == None:
+        if self.myPeer == None:
             raise Exception("Host-Class needs peer")
         else:
             # add Host to its Peers Hostlist
             key = Host.constructKey(hostIP, hostPort)
-            Host.myPeer.hosts[key] = self
+            self.myPeer.hosts[key] = self
             self.sendHello() # send HELO to Host
             
 

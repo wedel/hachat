@@ -63,13 +63,10 @@ class Peer:
         self.mThread.daemon = True
         self.mThread.start()
         
-        # initialise Host Class
-        Host.myPeer = self
-        
         # send HELO to first host if you know one
         if firstHost != None:
             (hostIP, hostPort) = firstHost
-            h = Host(hostIP, hostPort)
+            h = Host(self, hostIP, hostPort)
         
         #start gui
         self.gui.run()
@@ -107,7 +104,8 @@ class Peer:
                     # add host to knownPeers
                     key = Host.constructKey(msg.ip, msg.port)
                     self.knownPeers[key] = msg.name
-                    self.hosts[key].lastSeen = 1
+                    if key in self.hosts:
+                        self.hosts[key].lastSeen = 1
                     #logging.debug(str(self.knownPeers.keys()))
                     
                     logging.debug("received " + msg.text + " from " + msg.name)
@@ -154,7 +152,7 @@ class Peer:
         else:
             #insert in host dict
             logging.debug("adding " + key + " to hostlist")
-            h = Host(hostIP, hostPort)
+            h = Host(self, hostIP, hostPort)
             #logging.debug(str(self.hosts.keys()))
     
     def maintenanceLoop(self):
@@ -193,7 +191,7 @@ class Peer:
                     msg = host.msgQueue.popleft()
                     #convert to string to send over socket
                     msgStr = str(msg)
-                    logging.debug("sending msg: %s to %s" %(msgStr, host.hostIP))
+                    logging.debug("sending msg: %s to %s:%i" %(msgStr, host.hostIP, host.hostPort))
                     host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
     
     
