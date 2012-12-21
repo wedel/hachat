@@ -132,9 +132,14 @@ class Peer:
 
     def forwardMsg(self,msg):
         if len(self.hosts) > 0:
+            msgSender = msg.ip + ":" + str(msg.port)
             for h in self.hosts.values():
-                #logging.debug("Message " + msg.text + " will be forwarded")
-                h.addToMsgQueue(msg)
+                hostAddr = h.hostIP + ":" + str(h.hostPort)
+                if msgSender != hostAddr:
+                    #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
+                    h.addToMsgQueue(msg)
+                else:
+                    logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender)
         else:
             logging.debug("Peer %s:%d: No peer in HostList, can not forward msg" %(self.ip, self.port))
 
