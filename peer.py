@@ -187,7 +187,7 @@ class Peer:
                             (fillerIP, fillerPort) = filler.split(":", 2)
                             # and add it as a new host.
                             newHost = Host(self, fillerIP, fillerPort)
-                            del self.hosts[filler]
+                            del self.knownPeers[filler]
                 
             # send HELO from all hosts in hostlist
             for h in self.hosts.values():
