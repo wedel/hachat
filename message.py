@@ -9,251 +9,251 @@ from collections import OrderedDict, deque
 import logging
 
 class Message(object): # inherit from object
-        HEAD = const.HACHAT_HEADER
-        type = None
-        uid = None
-        #msgstring = None
-        def __init__(self, uid):
-                ''' build Message with supplied uid
-                or otherwise get a random uid'''
-                
-                super(Message, self).__init__() # inherit from object
-                # set unifier
-                if uid == None:
-                        self.uid = random.randint(0, 999999)
-                else:
-                        self.uid = uid
+    HEAD = const.HACHAT_HEADER
+    type = None
+    uid = None
+    #msgstring = None
+    def __init__(self, uid):
+        ''' build Message with supplied uid
+        or otherwise get a random uid'''
+        
+        super(Message, self).__init__() # inherit from object
+        # set unifier
+        if uid == None:
+                self.uid = random.randint(0, 999999)
+        else:
+                self.uid = uid
 
-        def __str__(self):
-                '''cast Message to string'''
-                raise NotImplementedError # must be implemented by SubClass
-                
+    def __str__(self):
+        '''cast Message to string'''
+        raise NotImplementedError # must be implemented by SubClass
+            
 class HeloMessage(Message):
-        '''regularly sent HELO Message which exchange information on IP and Port
-        Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderIP | senderPort | '''
+    '''regularly sent HELO Message which exchange information on IP and Port
+    Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderIP | senderPort | '''
+    
+    
+    def __init__(self, recipientIP, recipientPort, senderIP, senderPort, uid=None):
+        self.recipientIP = None
+        self.recipientPort = None
+        self.senderPort = None
+        super(HeloMessage, self).__init__(uid)
+        self.type = "HELO"
         
-        
-        def __init__(self, recipientIP, recipientPort, senderIP, senderPort, uid=None):
-                self.recipientIP = None
-                self.recipientPort = None
-                self.senderPort = None
-                super(HeloMessage, self).__init__(uid)
-                self.type = "HELO"
-                
-                # set recipient and sender
-                if recipientIP == None or recipientPort == None:
-                        raise MessageException("HeloMessage needs recipient!")
-                else:
-                        self.recipientIP = recipientIP
-                        self.recipientPort = recipientPort
-                if senderIP == None or senderPort == None:
-                #if senderPort == None:
-                        print self
-                        raise MessageException("HeloMessage needs sender!")
-                else:
-                        self.senderIP = senderIP
-                        self.senderPort = senderPort
-                
-        def __str__(self):
-                '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
-                # string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort)])
-                return string
+        # set recipient and sender
+        if recipientIP == None or recipientPort == None:
+                raise MessageException("HeloMessage needs recipient!")
+        else:
+                self.recipientIP = recipientIP
+                self.recipientPort = recipientPort
+        if senderIP == None or senderPort == None:
+        #if senderPort == None:
+                print self
+                raise MessageException("HeloMessage needs sender!")
+        else:
+                self.senderIP = senderIP
+                self.senderPort = senderPort
+            
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
+        # string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort)])
+        return string
 
 class HistReqMessage(Message):
-        '''HistReqMessages are sent when a peer wants to request the history of another peer. quantity is the number of history entries the other peer should send uns back.
-        Message layout: | HEAD | type | uid | quantity | '''
-    
-        def __init__(self, quantity, uid=None):
-                super(HistReqMessage, self).__init__(uid)
-                self.type = "HISTREQ"
-                
-                # set recipient and sender
-                if quantity == None:
-                        raise MessageException("HistReqMessage needs quantity!")
-                else:
-                        self.reqQuant = quantity
-        def __str__(self):
-                '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), str(self.reqQuant)])
-                return string
-                
+    '''HistReqMessages are sent when a peer wants to request the history of another peer. quantity is the number of history entries the other peer should send uns back.
+    Message layout: | HEAD | type | uid | quantity | '''
+
+    def __init__(self, quantity, uid=None):
+        super(HistReqMessage, self).__init__(uid)
+        self.type = "HISTREQ"
+        
+        # set recipient and sender
+        if quantity == None:
+                raise MessageException("HistReqMessage needs quantity!")
+        else:
+                self.reqQuant = quantity
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.HEAD, self.type, str(self.uid), str(self.reqQuant)])
+        return string
+        
 class TextMessage(Message):
-        ''' normal Text Messages
-        Message layout: | HEAD | type | uid | hash | sender name | sender ip | sender port | text | '''
-        
-        def __init__(self, name, ip, port, text, uid=None):
-                super(TextMessage, self).__init__(uid)
-                self.type = "TXT"
-                self.name = name
-                if ip != None:
-                        self.ip = ip
-                else:
-                        raise MessageException("TextMessage: Sender-IP mustn't be None")
-                self.port = port
-                self.text = text
-                
-                # make md5-hash over uid, name, text
-                hasher = hashlib.md5()
-                hasher.update(str(self.uid))
-                hasher.update(self.name)
-                hasher.update(self.ip)
-                hasher.update(str(self.port))
-                hasher.update(self.text)
-                self.hash = hasher.hexdigest()
-        
-        def __str__(self):
-                '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.hash, self.name, self.ip, str(self.port), self.text])
-                return string
-                
-class ByeMessage(Message):
-        '''Message Type to be send when leaving'''
-        
-        def __init__(self, ip, port, uid=None):
-                super(ByeMessage, self).__init__(uid)
-                self.type = "BYE"
+    ''' normal Text Messages
+    Message layout: | HEAD | type | uid | hash | sender name | sender ip | sender port | text | '''
+    
+    def __init__(self, name, ip, port, text, uid=None):
+        super(TextMessage, self).__init__(uid)
+        self.type = "TXT"
+        self.name = name
+        if ip != None:
                 self.ip = ip
-                self.port = port
+        else:
+                raise MessageException("TextMessage: Sender-IP mustn't be None")
+        self.port = port
+        self.text = text
         
-        def __str__(self):
-                '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.ip, str(self.port)])
-                return string
-                
+        # make md5-hash over uid, name, text
+        hasher = hashlib.md5()
+        hasher.update(str(self.uid))
+        hasher.update(self.name)
+        hasher.update(self.ip)
+        hasher.update(str(self.port))
+        hasher.update(self.text)
+        self.hash = hasher.hexdigest()
+    
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.HEAD, self.type, str(self.uid), self.hash, self.name, self.ip, str(self.port), self.text])
+        return string
+            
+class ByeMessage(Message):
+    '''Message Type to be send when leaving'''
+    
+    def __init__(self, ip, port, uid=None):
+        super(ByeMessage, self).__init__(uid)
+        self.type = "BYE"
+        self.ip = ip
+        self.port = port
+    
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.HEAD, self.type, str(self.uid), self.ip, str(self.port)])
+        return string
+            
 
 def toMessage(string):
-        '''construct Message type from string'''
+    '''construct Message type from string'''
+    try:
+        (HEAD, type, uid, rest) = re.split(',', string, 3) # get first part of message
+        uid = int(uid)
+            
+    except Exception, e:
+        print e
+        raise MessageException("malformed Message recieved")
+            
+     # check if Hachat Message
+    if HEAD != const.HACHAT_HEADER:
+        raise MessageException("wrong Header: " + HEAD)
+            
+    # decide on type of message        
+    if type == "HELO":
         try:
-                (HEAD, type, uid, rest) = re.split(',', string, 3) # get first part of message
-                uid = int(uid)
+            (recipientIP, recipientPort, senderIP, senderPort) = re.split(',', rest, 3) # get rest of message
+            # (recipientIP, recipientPort, senderPort) = re.split(',', rest, 2) # get rest of message
+            # cast ports to int
+            recipientPort = int(recipientPort)
+            senderPort = int(senderPort)
+            msg = HeloMessage(recipientIP, recipientPort, senderIP, senderPort, uid)
+            # msg = HeloMessage(recipientIP, recipientPort, senderPort, uid)
+            return msg
                 
         except Exception, e:
-                print e
-                raise MessageException("malformed Message recieved")
-                
-         # check if Hachat Message
-        if HEAD != const.HACHAT_HEADER:
-                raise MessageException("wrong Header: " + HEAD)
-                
-        # decide on type of message        
-        if type == "HELO":
-                try:
-                        (recipientIP, recipientPort, senderIP, senderPort) = re.split(',', rest, 3) # get rest of message
-                        # (recipientIP, recipientPort, senderPort) = re.split(',', rest, 2) # get rest of message
-                        # cast ports to int
-                        recipientPort = int(recipientPort)
-                        senderPort = int(senderPort)
-                        msg = HeloMessage(recipientIP, recipientPort, senderIP, senderPort, uid)
-                        # msg = HeloMessage(recipientIP, recipientPort, senderPort, uid)
-                        return msg
-                        
-                except Exception, e:
-                        raise MessageException("malformed HeloMessage recieved")
-                        print e
-                        
-        elif type == "HISTREQ":
-                try:
-                    quantity = int(rest)
-                    msg = HistReqMessage(uid, quantity)
-                    return msg
+            raise MessageException("malformed HeloMessage recieved")
+            print e
+                    
+    elif type == "HISTREQ":
+        try:
+            quantity = int(rest)
+            msg = HistReqMessage(uid, quantity)
+            return msg
 
-                except Exception, e:
-                        raise MessageException("malformed HistReqMessage recieved")
-                        print e
-                        
-        elif type == "TXT":
-                try:
-                        (hash, name, ip, port, text) = re.split(',', rest, 4) # get rest if message
-                        
-                except Exception, e:
-                        raise MessageException("malformed TextMessage recieved")
-                        print e
+        except Exception, e:
+            raise MessageException("malformed HistReqMessage recieved")
+            print e
+                    
+    elif type == "TXT":
+        try:
+            (hash, name, ip, port, text) = re.split(',', rest, 4) # get rest if message
                 
-                msg = TextMessage(name, ip, port, text, uid)
-                
-                 # test hash
-                if msg.hash != hash:
-                        raise MessageException("TextMessage has wrong hash")
-                else:
-                        return msg # return good TextMessage
-                        
-        elif type == "BYE":
-                try:
-                        (ip, port) = re.split(',', rest, 1) # get rest of message
-                except Exception, e:
-                        raise MessageException("malformed ByeMessage recieved")
-                
-                msg = ByeMessage(ip, port, uid)
-                return msg
-                
+        except Exception, e:
+            raise MessageException("malformed TextMessage recieved")
+            print e
+        
+        msg = TextMessage(name, ip, port, text, uid)
+        
+         # test hash
+        if msg.hash != hash:
+            raise MessageException("TextMessage has wrong hash")
         else:
-                raise MessageException("unknown type of message")
-                
-                
+            return msg # return good TextMessage
+                    
+    elif type == "BYE":
+        try:
+            (ip, port) = re.split(',', rest, 1) # get rest of message
+        except Exception, e:
+            raise MessageException("malformed ByeMessage recieved")
+        
+        msg = ByeMessage(ip, port, uid)
+        return msg
+            
+    else:
+        raise MessageException("unknown type of message")
+            
+            
 class MessageException(Exception):
-        '''Custom Exception Type for Messages'''
-        def __init__(self, value):
-                 self.parameter = value
-        def __str__(self):
-                return repr(self.parameter)
+    '''Custom Exception Type for Messages'''
+    def __init__(self, value):
+        self.parameter = value
+    def __str__(self):
+        return repr(self.parameter)
 
 class History:
-    '''Klasse History speichert und ueberprueft
-       Text-Msgs'''
-    
-    msgDic = OrderedDict()  
-    hashDic = deque()
+'''Klasse History speichert und ueberprueft
+   Text-Msgs'''
 
-    def __init__(self, msgLimit=100, hashLimit=1000):
-        self.msgLimit = msgLimit
-        self.hashLimit = hashLimit
-        logging.debug("History applied")
+msgDic = OrderedDict()  
+hashDic = deque()
 
-    def addMsg(self, msg):
-        self.msgDic[msg.hash] = msg
-        self.hashDic.append(msg.hash)
-        logging.debug("Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic)))
+def __init__(self, msgLimit=100, hashLimit=1000):
+    self.msgLimit = msgLimit
+    self.hashLimit = hashLimit
+    logging.debug("History applied")
 
-        if len(self.msgDic) > self.msgLimit: 
-            if len(self.hashDic) > self.hashLimit:
-                hashQuant = ((len(self.hashDic))-self.hashLimit)
-                msgQuant = ((len(self.msgDic))-self.msgLimit)
-                self.removeMsg(msgQuant,hashQuant)
+def addMsg(self, msg):
+    self.msgDic[msg.hash] = msg
+    self.hashDic.append(msg.hash)
+    logging.debug("Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic)))
 
-            elif len(self.hashDic) <= self.hashLimit:
-                msgQuant = ((len(self.msgDic))-self.msgLimit)
-                self.removeMsg(msgQuant,0)
-        logging.debug("added msg to history")
-    
-    def msgExists(self,msg):
-        if msg.hash in self.hashDic:
-            return True
+    if len(self.msgDic) > self.msgLimit: 
+        if len(self.hashDic) > self.hashLimit:
+            hashQuant = ((len(self.hashDic))-self.hashLimit)
+            msgQuant = ((len(self.msgDic))-self.msgLimit)
+            self.removeMsg(msgQuant,hashQuant)
+
+        elif len(self.hashDic) <= self.hashLimit:
+            msgQuant = ((len(self.msgDic))-self.msgLimit)
+            self.removeMsg(msgQuant,0)
+    logging.debug("added msg to history")
+
+def msgExists(self,msg):
+    if msg.hash in self.hashDic:
+        return True
+    else:
+        return False
+
+def msgSafed(self,msg):
+    if msg.hash in self.msgDic:
+        return True
+    else:
+        return False
+
+def removeMsg(self, msgQuant=0, hashQuant=0):
+    if msgQuant > 0:
+        if len(self.msgDic) >= msgQuant:
+            for i in range(0,msgQuant):
+                self.msgDic.popitem(last=False)
+            logging.debug("Erased %d msgs out of History" % msgQuant)
         else:
-            return False
+            raise MessageException('Can not remove msg out of MsgDict. Its to small')
 
-    def msgSafed(self,msg):
-        if msg.hash in self.msgDic:
-            return True
+    if hashQuant > 0:
+        if len(self.hashDic) >= hashQuant:
+            for i in range(0,msgQuant):
+                self.hashDic.popleft()
+            logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
         else:
-            return False
+            raise MessageException('Can not remove hashes out of HashDict. Its to small')
 
-    def removeMsg(self, msgQuant=0, hashQuant=0):
-        if msgQuant > 0:
-            if len(self.msgDic) >= msgQuant:
-                for i in range(0,msgQuant):
-                    self.msgDic.popitem(last=False)
-                logging.debug("Erased %d msgs out of History" % msgQuant)
-            else:
-                raise MessageException('Can not remove msg out of MsgDict. Its to small')
-
-        if hashQuant > 0:
-            if len(self.hashDic) >= hashQuant:
-                for i in range(0,msgQuant):
-                    self.hashDic.popleft()
-                logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
-            else:
-                raise MessageException('Can not remove hashes out of HashDict. Its to small')
-
-                    
+                
 
