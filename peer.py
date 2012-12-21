@@ -20,7 +20,7 @@ class Peer:
         self.name = name # set peer name
         self.inSocket = None # Socket für eingehende Verbindungen
         self.hosts = {} # Dict. der bekannten Hosts
-        self.remindList = {} # Dict (ip:port) : name
+        self.knownPeers = {} # Dict (ip:port) : name
         
         # set own ip if you already know it
         if ip != None:
@@ -104,11 +104,11 @@ class Peer:
                     self.forwardMsg(msg)
                     self.gui.empfang(msg) #gibt nachricht an gui weiter 
                     
-                    # add host to remindlist
+                    # add host to knownPeers
                     key = Host.constructKey(msg.ip, msg.port)
-                    self.remindList[key] = msg.name
+                    self.knownPeers[key] = msg.name
                     self.hosts[key].lastSeen = 1
-                    #logging.debug(str(self.remindList.keys()))
+                    #logging.debug(str(self.knownPeers.keys()))
                     
                     logging.debug("received " + msg.text + " from " + msg.name)
                     
@@ -116,8 +116,8 @@ class Peer:
                 key = Host.constructKey(msg.ip, msg.port)
                 if key in self.hosts:
                     del self.hosts[key]
-                if key in self.remindList:
-                    del self.remindList[key]
+                if key in self.knownPeers:
+                    del self.knownPeers[key]
                 logging.debug("recieved BYE, deleting " + key)
                     
             else:
