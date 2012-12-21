@@ -59,6 +59,58 @@ class HeloMessage(Message):
         # string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort)])
         return string
 
+class HostExchangeMessage(Message):
+        '''for request and pushing Hosts
+        Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderPort | level | quant | listofHosts |'''
+        recipientIP = None
+        recipientPort = None
+        # senderIP = None
+        senderPort = None
+        level = None
+        listofHosts = None
+        quant = None
+        
+        
+        def __init__(self, recipientIP, recipientPort, senderPort, level, quant=None , listofHosts=None, uid=None):
+                super(HostExchangeMessage, self).__init__(uid)
+                self.type = "HOSTEXCHANGE"
+                                
+                # set recipient and sender
+                if recipientIP == None or recipientPort == None:
+                        raise Exception("HostExchangeMessage needs recipient!")
+                else:
+                        self.recipientIP = recipientIP
+                        self.recipientPort = recipientPort
+                # if senderIP == None or senderPort == None:
+                if senderPort == None:
+                        print self
+                        raise Exception("HostExchangeMessage needs sender!")
+                else:
+                        # self.senderIP = senderIP
+                        self.senderPort = senderPort
+                if level == None:
+                    raise Exception("HostExchangeMessage needs level!")
+                else:
+                    self.level = level
+                    
+                    if self.level == "REQUEST":
+                        if quant == None:
+                            raise Exception("A Requesting HostExchangeMessage needs a defined quant of Hosts!")
+                        else: 
+                            self.quant = quant
+                            
+                    if self.level == "PUSH":
+                        if listofHosts == None:
+                            raise Exception("A Pushing HostExchangeMessage needs to have a list of Hosts defined!")
+                        else:
+                            self.listofHosts = listofHosts
+                
+        def __str__(self):
+                '''implements interface'''
+                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort), self.level, str(self.quant), str(self.listofHosts)])
+                return string
+
+
 class HistReqMessage(Message):
     '''HistReqMessages are sent when a peer wants to request the history of another peer. quantity is the number of history entries the other peer should send uns back.
     Message layout: | HEAD | type | uid | quantity | '''
@@ -185,6 +237,23 @@ def toMessage(string):
         
         msg = ByeMessage(ip, port, uid)
         return msg
+    
+    elif type == "HOSTEXCHANGE":
+        try:
+            (recipientIP, recipientPort, senderPort, level, quant, listofHosts) = re.split(',', rest, 5) # get rest if message
+        except Exception, e:
+            raise MessageException("malformed HostExchangeMessage recieved")
+            print e
+                
+        if level == "REQUEST":               
+            msg = HostExchangeMessage(recipientIP, recipientPort, senderPort, level, quant=int(quant), uid=uid)
+            logging.debug("HostExchangeMessage: got REQUEST")
+            return msg # return good HostExchangeMessage
+        elif level == "PUSH":
+            list = eval(listofHosts)
+            msg = HostExchangeMessage(recipientIP, recipientPort, senderPort, level, listofHosts=list, uid=uid)
+            logging.debug("HostExchangeMessage: got PUSH")
+            return msg # return good HostExchangeMessage
             
     else:
         raise MessageException("unknown type of message")

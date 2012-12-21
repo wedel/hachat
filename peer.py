@@ -7,6 +7,7 @@ import threading
 import message
 import time
 import random
+import re
 from host import Host
 import logging
 import gui
@@ -66,6 +67,11 @@ class Peer:
         if firstHost != None:
             (hostIP, hostPort) = firstHost
             h = Host(self, hostIP, hostPort)
+            
+            #Initial Request for some more hosts from firstHost
+            key = h.constructKey(hostIP, hostPort)
+            logging.debug("Initial Request for some peers from " + key)
+            self.requestHosts(key, const.INI_PEERLIMIT) # and get some more hosts
         
         #start gui
         self.gui.run()
@@ -116,6 +122,23 @@ class Peer:
                 if key in self.knownPeers:
                     del self.knownPeers[key]
                 logging.debug("recieved BYE, deleting " + key)
+            
+            elif isinstance(msg, message.HostExchangeMessage):
+                senderIP = addr[0]
+                neighbour = senderIP + ':' + str(msg.senderPort)
+                logging.debug("reseived HostExchangeMessage: " + str(msg))
+                    
+                if msg.level == "REQUEST":
+                    self.pushHosts(neighbour, msg.quant)
+                    logging.debug("reseived: HostExchangeMessage Request. Will enter pushHosts()")
+                    
+                elif msg.level == "PUSH": # add hosts to HostList
+                    logging.debug("reseived: HostExchangeMessage Push. Will add Hosts to HostList")
+                    for h in msg.listofHosts:
+                        self.addToHosts(h)
+                        logging.debug("adding " + h + "to HostList")         
+                else:
+                    logging.warning("reseived HostExchangeMessage with unknown level!")
                     
             else:
                 logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
@@ -146,8 +169,12 @@ class Peer:
 
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
-        (hostIP, hostPort) = addr
-        key = Host.constructKey(hostIP, hostPort)
+        if isinstance(addr, str):
+            key = addr
+            (hostIP, hostPort) = re.split(':',addr,1)
+        elif isinstance(addr, tuple):
+            (hostIP, hostPort) = addr
+            key = Host.constructKey(hostIP, hostPort)
         
         if key in self.hosts:
             host = self.hosts[key]
@@ -157,7 +184,7 @@ class Peer:
             #insert in host dict
             logging.debug("adding " + key + " to hostlist")
             h = Host(self, hostIP, hostPort)
-            #logging.debug(str(self.hosts.keys()))
+        logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
     
     def maintenanceLoop(self):
         while True:
@@ -183,18 +210,24 @@ class Peer:
                         #choose one
                         filler = random.choice(self.knownPeers.keys())
                         if filler != None:
-                            logging.debug("got to few Peers, filling with" + filler)
+                            logging.debug("got to few Peers, filling with " + filler)
                             (fillerIP, fillerPort) = filler.split(":", 2)
                             # and add it as a new host.
                             newHost = Host(self, fillerIP, fillerPort)
                             del self.knownPeers[filler]
+                            logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
+                    elif self.hosts: #if nothing in knownPeers but in hostlist
+                        neighbour = random.choice(self.hosts.keys()) #pick a rand host from hostlist
+                        logging.debug("Request some peers from " + neighbour)
+                        self.requestHosts(neighbour) # and get some more hosts
+                    else:
+                        logging.error("You are not connected to the network!!! HostList as well as List of known Hosts is empty.")
                 
             # send HELO from all hosts in hostlist
             for h in self.hosts.values():
                 if h.lastSeen == 0: # but only if you haven't seen him for a while
                     h.sendHello()
 
-                    
             self.counter = (self.counter + 1) % 3
             logging.debug("maintenance end")
             
@@ -210,6 +243,56 @@ class Peer:
                     msgStr = str(msg)
                     logging.debug("sending msg: %s to %s:%i" %(msgStr, host.hostIP, host.hostPort))
                     host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
+                    
+    def requestHosts(self, neighbour, quant=None):
+        '''request Hosts from neighbour'''
+        if quant == None:
+            quantToRequest = ((const.MIN_PEERLIMIT - len(self.hosts)))
+        else: 
+            quantToRequest = quant
+        try:
+            neighbourHost = self.hosts[neighbour] #check neighbour in hostlist
+            neighbourIP = neighbourHost.hostIP
+            neighbourPort = neighbourHost.hostPort
+            
+            # constuct requestMsg: recipientIP, recipientPort, senderPort, level, quant , listofHosts=None, uid=None: 
+            requestMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.port, "REQUEST", quant=quantToRequest)
+            neighbourHost.addToMsgQueue(requestMsg)# push it in hosts msgqueue
+            logging.debug("Requested more Hosts from %s" %(neighbour))
+        except Exception:
+            raise message.MessageException("requestHost(): given neighbour needs to be a (IP,Port)Pair and needs to be in HostList")
+
+    
+    def pushHosts(self, neighbour, quant):
+        '''give Hosts from hostExchange to a neighbour'''
+        logging.debug("entered pushHosts, request for %d hosts"%(quant))
+        listofHosts = []
+        i = 0
+        if len(self.hosts) < quant:
+            quant = len(self.hosts)
+            
+        while i < quant:
+            host = random.choice(self.hosts.keys())
+            if host == None:
+                break #nothing in hostlist
+            if host not in listofHosts:
+                listofHosts.append(host) 
+                i = i+1       
+        
+        if len(listofHosts) > 0:
+            #logging.debug("construct pushHostExchange Msg")
+            try:
+                neighbourHost = self.hosts[neighbour] #check neighbour in hostlist
+                neighbourIP = neighbourHost.hostIP
+                neighbourPort = neighbourHost.hostPort
+                
+                pushMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.port, "PUSH", listofHosts=listofHosts)
+                neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
+                #logging.debug("Pushed Hosts to %s" %(neighbour))
+            except Exception:
+                raise message.MessageException("requestHost(): given neighbour needs to be a (IP,Port)Pair and needs to be in HostList") 
+        else: 
+            logging.debug("Can't push Hosts, no Hosts in HostList")
     
     
     def __del__(self):
