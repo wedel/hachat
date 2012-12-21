@@ -6,6 +6,7 @@ import socket
 import threading
 import message
 import time
+import random
 from host import Host
 import logging
 import gui
@@ -159,7 +160,7 @@ class Peer:
             logging.debug("maintenance start")
             logging.debug("counter: " + str(self.counter))
             
-            # every 3 maintenance loops check if you have to delete host
+            # every 3 maintenance loops check if you have to delete host and fill Hostlist if needed
             if self.counter == 2:
                 temp = self.hosts.keys()
                 for key in temp:
@@ -170,12 +171,24 @@ class Peer:
                         del self.hosts[key]
                     else:
                         host.lastSeen = 0 # reset lastSeen
+
+                # do we have to few neighbors and we know other peers?
+                if len(self.hosts) < const.MIN_PEERLIMIT:
+                    if self.knownPeers:
+                        #choose one
+                        filler = random.choice(self.knownPeers.keys())
+                        if filler != None:
+                            logging.debug("got to few Peers, filling with" + filler)
+                            (fillerIP, fillerPort) = filler.split(":", 2)
+                            # and add it as a new host.
+                            newHost = Host(self, fillerIP, fillerPort)
                 
             # send HELO from all hosts in hostlist
             for h in self.hosts.values():
                 if h.lastSeen == 0: # but only if you haven't seen him for a while
                     h.sendHello()
 
+                    
             self.counter = (self.counter + 1) % 3
             logging.debug("maintenance end")
             
