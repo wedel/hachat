@@ -199,61 +199,60 @@ class MessageException(Exception):
         return repr(self.parameter)
 
 class History:
-'''Klasse History speichert und ueberprueft
-   Text-Msgs'''
+    '''Klasse History speichert und ueberprueft Text-Msgs'''
 
-msgDic = OrderedDict()  
-hashDic = deque()
+    msgDic = OrderedDict()  
+    hashDic = deque()
 
-def __init__(self, msgLimit=100, hashLimit=1000):
-    self.msgLimit = msgLimit
-    self.hashLimit = hashLimit
-    logging.debug("History applied")
+    def __init__(self, msgLimit=100, hashLimit=1000):
+        self.msgLimit = msgLimit
+        self.hashLimit = hashLimit
+        logging.debug("History applied")
 
-def addMsg(self, msg):
-    self.msgDic[msg.hash] = msg
-    self.hashDic.append(msg.hash)
-    logging.debug("Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic)))
+    def addMsg(self, msg):
+        self.msgDic[msg.hash] = msg
+        self.hashDic.append(msg.hash)
+        logging.debug("Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic)))
 
-    if len(self.msgDic) > self.msgLimit: 
-        if len(self.hashDic) > self.hashLimit:
-            hashQuant = ((len(self.hashDic))-self.hashLimit)
-            msgQuant = ((len(self.msgDic))-self.msgLimit)
-            self.removeMsg(msgQuant,hashQuant)
+        if len(self.msgDic) > self.msgLimit: 
+            if len(self.hashDic) > self.hashLimit:
+                hashQuant = ((len(self.hashDic))-self.hashLimit)
+                msgQuant = ((len(self.msgDic))-self.msgLimit)
+                self.removeMsg(msgQuant,hashQuant)
 
-        elif len(self.hashDic) <= self.hashLimit:
-            msgQuant = ((len(self.msgDic))-self.msgLimit)
-            self.removeMsg(msgQuant,0)
-    logging.debug("added msg to history")
+            elif len(self.hashDic) <= self.hashLimit:
+                msgQuant = ((len(self.msgDic))-self.msgLimit)
+                self.removeMsg(msgQuant,0)
+        logging.debug("added msg to history")
 
-def msgExists(self,msg):
-    if msg.hash in self.hashDic:
-        return True
-    else:
-        return False
-
-def msgSafed(self,msg):
-    if msg.hash in self.msgDic:
-        return True
-    else:
-        return False
-
-def removeMsg(self, msgQuant=0, hashQuant=0):
-    if msgQuant > 0:
-        if len(self.msgDic) >= msgQuant:
-            for i in range(0,msgQuant):
-                self.msgDic.popitem(last=False)
-            logging.debug("Erased %d msgs out of History" % msgQuant)
+    def msgExists(self,msg):
+        if msg.hash in self.hashDic:
+            return True
         else:
-            raise MessageException('Can not remove msg out of MsgDict. Its to small')
+            return False
 
-    if hashQuant > 0:
-        if len(self.hashDic) >= hashQuant:
-            for i in range(0,msgQuant):
-                self.hashDic.popleft()
-            logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
+    def msgSafed(self,msg):
+        if msg.hash in self.msgDic:
+            return True
         else:
-            raise MessageException('Can not remove hashes out of HashDict. Its to small')
+            return False
+
+    def removeMsg(self, msgQuant=0, hashQuant=0):
+        if msgQuant > 0:
+            if len(self.msgDic) >= msgQuant:
+                for i in range(0,msgQuant):
+                    self.msgDic.popitem(last=False)
+                logging.debug("Erased %d msgs out of History" % msgQuant)
+            else:
+                raise MessageException('Can not remove msg out of MsgDict. Its to small')
+
+        if hashQuant > 0:
+            if len(self.hashDic) >= hashQuant:
+                for i in range(0,msgQuant):
+                    self.hashDic.popleft()
+                logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
+            else:
+                raise MessageException('Can not remove hashes out of HashDict. Its to small')
 
                 
 
