@@ -87,7 +87,7 @@ class Peer:
             try:
                 msg = message.toMessage(data)
             except message.MessageException, e:
-                logging.warn("unrecocnized message " + str(e))
+                logging.warn("unrecognised message " + str(e))
                 
             if isinstance(msg, message.HeloMessage):
                 # set your own ip if you dont know it
@@ -106,11 +106,13 @@ class Peer:
                     self.forwardMsg(msg)
                     self.gui.empfang(msg) #gibt nachricht an gui weiter 
                     
-                    # add host to knownPeers
                     key = Host.constructKey(msg.ip, msg.port)
-                    self.knownPeers[key] = msg.name
                     if key in self.hosts:
+                        # if messag from host - update lastSeen
                         self.hosts[key].lastSeen = 1
+                    else:
+                        # add to knownPeers
+                        self.knownPeers[key] = msg.name
                     #logging.debug(str(self.knownPeers.keys()))
                     
                     logging.debug("received " + msg.text + " from " + msg.name)
@@ -126,19 +128,19 @@ class Peer:
             elif isinstance(msg, message.HostExchangeMessage):
                 senderIP = addr[0]
                 neighbour = senderIP + ':' + str(msg.senderPort)
-                logging.debug("reseived HostExchangeMessage: " + str(msg))
+                logging.debug("received HostExchangeMessage: " + str(msg))
                     
                 if msg.level == "REQUEST":
                     self.pushHosts(neighbour, msg.quant)
-                    logging.debug("reseived: HostExchangeMessage Request. Will enter pushHosts()")
+                    logging.debug("received: HostExchangeMessage Request. Will enter pushHosts()")
                     
                 elif msg.level == "PUSH": # add hosts to HostList
-                    logging.debug("reseived: HostExchangeMessage Push. Will add Hosts to HostList")
+                    logging.debug("received: HostExchangeMessage Push. Will add Hosts to HostList")
                     for h in msg.listofHosts:
                         self.addToHosts(h)
-                        logging.debug("adding " + h + "to HostList")         
+                        logging.debug("adding " + h + " to HostList")         
                 else:
-                    logging.warning("reseived HostExchangeMessage with unknown level!")
+                    logging.warning("received HostExchangeMessage with unknown level!")
                     
             else:
                 logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
