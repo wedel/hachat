@@ -94,11 +94,18 @@ class Peer:
                 if self.ip == "null":
                     self.ip = msg.recipientIP
                 
-                # add new host to hostlist
                 senderIP = addr[0]
-                inputaddr = (senderIP,  msg.senderPort)
-                logging.debug("received: HELO from " + str(inputaddr))
-                self.addToHosts(inputaddr) 
+                key = Host.constructKey(senderIP, msg.senderPort)
+                logging.debug("received: HELO from " + str(key))
+                
+                if key in self.hosts:
+                     # if you know Host set status that Host had contact
+                    host = self.hosts[key]
+                    host.lastSeen = 1 
+                    logging.debug(key + " already in hostlist - refreshing lastSeen")
+                else: 
+                    # add new host to hostlist
+                    self.addToHosts(key) 
                 
             elif isinstance(msg, message.TextMessage):
                 if not self.history.msgExists(msg) : # if i don't already know message
@@ -181,12 +188,7 @@ class Peer:
             
         # if host is not the peer itself
         if hostIP != self.ip or int(hostPort) != int(self.port):
-            if key in self.hosts:
-                # set status that Host had contact
-                host = self.hosts[key]
-                host.lastSeen = 1 
-                logging.debug(key + " already in hostlist - refreshing lastSeen")
-            else:
+            if not (key in self.hosts):
                 # insert in host dict
                 logging.debug("adding " + key + " to hostlist")
                 h = Host(self, hostIP, hostPort)
