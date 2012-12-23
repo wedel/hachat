@@ -137,8 +137,7 @@ class Peer:
                 elif msg.level == "PUSH": # add hosts to HostList
                     logging.debug("received: HostExchangeMessage Push. Will add Hosts to HostList")
                     for h in msg.listofHosts:
-                        self.addToHosts(h)
-                        logging.debug("adding " + h + " to HostList")         
+                        self.addToHosts(h)      
                 else:
                     logging.warning("received HostExchangeMessage with unknown level!")
                     
@@ -191,7 +190,7 @@ class Peer:
                 # insert in host dict
                 logging.debug("adding " + key + " to hostlist")
                 h = Host(self, hostIP, hostPort)
-        logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
+            logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
     
     def maintenanceLoop(self):
         while True:
