@@ -171,21 +171,26 @@ class Peer:
 
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
+        
+        # construct key and tuple
         if isinstance(addr, str):
             key = addr
             (hostIP, hostPort) = re.split(':',addr,1)
         elif isinstance(addr, tuple):
             (hostIP, hostPort) = addr
             key = Host.constructKey(hostIP, hostPort)
-        
-        if key in self.hosts:
-            host = self.hosts[key]
-            host.lastSeen = 1 # set status that Host had contact
-            logging.debug(key + " already in hostlist - refreshing lastSeen")
-        else:
-            #insert in host dict
-            logging.debug("adding " + key + " to hostlist")
-            h = Host(self, hostIP, hostPort)
+            
+        # if host is not the peer itself
+        if hostIP != self.ip or int(hostPort) != int(self.port):
+            if key in self.hosts:
+                # set status that Host had contact
+                host = self.hosts[key]
+                host.lastSeen = 1 
+                logging.debug(key + " already in hostlist - refreshing lastSeen")
+            else:
+                # insert in host dict
+                logging.debug("adding " + key + " to hostlist")
+                h = Host(self, hostIP, hostPort)
         logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
     
     def maintenanceLoop(self):
