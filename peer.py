@@ -65,9 +65,14 @@ class Peer:
         
         # send HELO to first host if you know one
         if firstHost != None:
+            self.key = None
             (hostIP, hostPort) = firstHost
             h = Host(self, hostIP, hostPort)
             
+            # wait until you're connected to the network
+            while self.key == None:
+                time.sleep(0.5)
+                
             #Initial Request for some more hosts from firstHost
             key = h.constructKey(hostIP, hostPort)
             logging.debug("Initial Request for some peers from " + key)
@@ -110,52 +115,62 @@ class Peer:
                     logging.debug(key + " already in hostlist - refreshing lastSeen")
                 else: 
                     # add new host to hostlist
-                    self.addToHosts(key) 
-                
-            elif isinstance(msg, message.TextMessage):
-                if not self.history.msgExists(msg) : # if i don't already know message
-                    self.history.addMsg(msg)
-                    self.forwardMsg(msg)
-                    self.gui.empfang(msg) #gibt nachricht an gui weiter 
-                    
-                    key = msg.origin
-                    if key in self.hosts:
-                        # if messag from host - update lastSeen
-                        self.hosts[key].lastSeen = 1
-                    else:
-                        # add to knownPeers
-                        self.knownPeers[key] = msg.name
-                    #logging.debug(str(self.knownPeers.keys()))
-                    
-                    logging.debug("received " + msg.text + " from " + msg.name)
-                    
-            elif isinstance(msg, message.ByeMessage):
-                key = msg.origin
-                if key in self.hosts:
-                    del self.hosts[key]
-                if key in self.knownPeers:
-                    del self.knownPeers[key]
-                logging.debug("recieved BYE, deleting " + key)
+                    self.addToHosts(key)
             
-            elif isinstance(msg, message.HostExchangeMessage):
-                senderIP = addr[0]
-                neighbour = senderIP + ':' + str(msg.senderPort)
-                logging.debug("received HostExchangeMessage: " + str(msg))
-                    
-                if msg.level == "REQUEST":
-                    self.pushHosts(neighbour, msg.quant)
-                    logging.debug("received: HostExchangeMessage Request. Will enter pushHosts()")
-                    
-                elif msg.level == "PUSH": # add hosts to HostList
-                    logging.debug("received: HostExchangeMessage Push. Will add Hosts to HostList")
-                    for h in msg.listofHosts:
-                        self.addToHosts(h)      
-                else:
-                    logging.warning("received HostExchangeMessage with unknown level!")
-                    
+            # only accept Messages from Peers in self.hosts        
             else:
-                logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
-                logging.warn(type(msg))
+                try:
+                    sender = msg.origin
+                except Exception, e:
+                    logging.debug("Msg needs origin, but doesn't have one " + str(msg))
+                    
+                if not sender in self.hosts:
+                    logging.debug("We only accept Messages from Peers in Hostlist")
+                else:
+                
+                    if isinstance(msg, message.TextMessage):
+                        if not self.history.msgExists(msg) : # if i don't already know message
+                            self.history.addMsg(msg)
+                            self.forwardMsg(msg)
+                            self.gui.empfang(msg) #gibt nachricht an gui weiter 
+                            
+                            key = msg.origin
+                            if key in self.hosts:
+                                # if messag from host - update lastSeen
+                                self.hosts[key].lastSeen = 1
+                            else:
+                                # add to knownPeers
+                                self.knownPeers[key] = msg.name
+                            #logging.debug(str(self.knownPeers.keys()))
+                            
+                            logging.debug("received " + msg.text + " from " + msg.name)
+                            
+                    elif isinstance(msg, message.ByeMessage):
+                        key = msg.origin
+                        if key in self.hosts:
+                            del self.hosts[key]
+                        if key in self.knownPeers:
+                            del self.knownPeers[key]
+                        logging.debug("recieved BYE, deleting " + key)
+                    
+                    elif isinstance(msg, message.HostExchangeMessage):
+                        neighbour = msg.origin
+                        logging.debug("received HostExchangeMessage: " + str(msg))
+                            
+                        if msg.level == "REQUEST":
+                            self.pushHosts(neighbour, msg.quant)
+                            logging.debug("received: HostExchangeMessage Request. Will enter pushHosts()")
+                            
+                        elif msg.level == "PUSH": # add hosts to HostList
+                            logging.debug("received: HostExchangeMessage Push. Will add Hosts to HostList")
+                            for h in msg.listofHosts:
+                                self.addToHosts(h)      
+                        else:
+                            logging.warning("received HostExchangeMessage with unknown level!")
+                            
+                    else:
+                        logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
+                        logging.warn(type(msg))
 
 
     def sendText(self, text):
@@ -270,8 +285,8 @@ class Peer:
             neighbourIP = neighbourHost.hostIP
             neighbourPort = neighbourHost.hostPort
             
-            # constuct requestMsg: recipientIP, recipientPort, senderPort, level, quant , listofHosts=None, uid=None: 
-            requestMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.port, "REQUEST", quant=quantToRequest)
+            # constuct requestMsg: recipientIP, recipientPort, origin, level, quant , listofHosts=None, uid=None: 
+            requestMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.key, "REQUEST", quant=quantToRequest)
             neighbourHost.addToMsgQueue(requestMsg)# push it in hosts msgqueue
             logging.debug("Requested more Hosts from %s" %(neighbour))
         except Exception:
@@ -307,12 +322,9 @@ class Peer:
             
         if len(listofHosts) > 0:
             #logging.debug("construct pushHostExchange Msg")
-            try:
-                pushMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.port, "PUSH", listofHosts=listofHosts)
-                neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
-                #logging.debug("Pushed Hosts to %s" %(neighbour))
-            except Exception:
-                raise message.MessageException("requestHost(): given neighbour needs to be a (IP,Port)Pair and needs to be in HostList") 
+            pushMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.key, "PUSH", listofHosts=listofHosts)
+            neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
+            #logging.debug("Pushed Hosts to %s" %(neighbour))
         else: 
             logging.debug("Can't push Hosts, no Hosts in HostList")
     

@@ -61,17 +61,15 @@ class HeloMessage(Message):
 
 class HostExchangeMessage(Message):
         '''for request and pushing Hosts
-        Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderPort | level | quant | listofHosts |'''
+        Message layout: | HEAD | type | uid | recipientIP | recipientPort | origin key | level | quant | listofHosts |'''
         recipientIP = None
         recipientPort = None
-        # senderIP = None
-        senderPort = None
         level = None
         listofHosts = None
         quant = None
         
         
-        def __init__(self, recipientIP, recipientPort, senderPort, level, quant=None , listofHosts=None, uid=None):
+        def __init__(self, recipientIP, recipientPort, origin, level, quant=None , listofHosts=None, uid=None):
                 super(HostExchangeMessage, self).__init__(uid)
                 self.type = "HOSTEXCHANGE"
                                 
@@ -81,13 +79,13 @@ class HostExchangeMessage(Message):
                 else:
                         self.recipientIP = recipientIP
                         self.recipientPort = recipientPort
-                # if senderIP == None or senderPort == None:
-                if senderPort == None:
+                        
+                if origin == None:
                         print self
-                        raise Exception("HostExchangeMessage needs sender!")
+                        raise Exception("HostExchangeMessage needs origin - you must be connected to the network!")
                 else:
-                        # self.senderIP = senderIP
-                        self.senderPort = senderPort
+                        self.origin = origin
+                        
                 if level == None:
                     raise Exception("HostExchangeMessage needs level!")
                 else:
@@ -107,7 +105,7 @@ class HostExchangeMessage(Message):
                 
         def __str__(self):
                 '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort), self.level, str(self.quant), str(self.listofHosts)])
+                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.listofHosts)])
                 return string
 
 
@@ -238,18 +236,18 @@ def toMessage(string):
     
     elif type == "HOSTEXCHANGE":
         try:
-            (recipientIP, recipientPort, senderPort, level, quant, listofHosts) = re.split(',', rest, 5) # get rest if message
+            (recipientIP, recipientPort, origin, level, quant, listofHosts) = re.split(',', rest, 5) # get rest if message
         except Exception, e:
             raise MessageException("malformed HostExchangeMessage recieved")
             print e
                 
         if level == "REQUEST":               
-            msg = HostExchangeMessage(recipientIP, recipientPort, senderPort, level, quant=int(quant), uid=uid)
+            msg = HostExchangeMessage(recipientIP, recipientPort, origin, level, quant=int(quant), uid=uid)
             logging.debug("HostExchangeMessage: got REQUEST")
             return msg # return good HostExchangeMessage
         elif level == "PUSH":
             list = eval(listofHosts)
-            msg = HostExchangeMessage(recipientIP, recipientPort, senderPort, level, listofHosts=list, uid=uid)
+            msg = HostExchangeMessage(recipientIP, recipientPort, origin, level, listofHosts=list, uid=uid)
             logging.debug("HostExchangeMessage: got PUSH")
             return msg # return good HostExchangeMessage
             
