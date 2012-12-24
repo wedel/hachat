@@ -161,18 +161,16 @@ class Peer:
                 self.history.addMsg(msg) # add to own history
                 h.addToMsgQueue(msg)
 
-    def forwardMsg(self,msg):
-        if len(self.hosts) > 0:
-            msgSender = msg.ip + ":" + str(msg.port)
-            for h in self.hosts.values():
-                hostAddr = h.hostIP + ":" + str(h.hostPort)
-                if msgSender != hostAddr:
-                    #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
-                    h.addToMsgQueue(msg)
-                else:
-                    logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender)
-        else:
-            logging.debug("Peer %s:%d: No peer in HostList, can not forward msg" %(self.ip, self.port))
+    def forwardMsg(self, msg):
+        '''forwarding TextMessage, but not to initial sender'''
+        msgSender = Host.constructKey(msg.ip, msg.port)
+        for h in self.hosts.values():
+            hostAddr = Host.constructKey(h.hostIP, h.hostPort)
+            if msgSender != hostAddr:
+                #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
+                h.addToMsgQueue(msg)
+            else:
+                logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender)
 
 
     def addToHosts(self, addr):
