@@ -276,24 +276,31 @@ class Peer:
         logging.debug("entered pushHosts, request for %d hosts"%(quant))
         listofHosts = []
         i = 0
-        if len(self.hosts) < quant:
-            quant = len(self.hosts)
+        # -1 because neighbour is part of hostlist
+        if len(self.hosts) - 1 < quant:
+            quant = len(self.hosts) - 1
+        
+        # get neighbour from hostlist
+        try:
+            neighbourHost = self.hosts[neighbour]
+            neighbourIP = neighbourHost.hostIP
+            neighbourPort = neighbourHost.hostPort
+        except Exception, e:
+            logging.error(str(e))
             
         while i < quant:
-            host = random.choice(self.hosts.keys())
-            if host == None:
+            key = random.choice(self.hosts.keys())
+            if key == None:
                 break #nothing in hostlist
-            if host not in listofHosts:
-                listofHosts.append(host) 
-                i = i+1       
-        
+            # check if key doesnt belong to neighbour
+            if neighbourHost != self.hosts[key]:
+                if key not in listofHosts:
+                    listofHosts.append(key) 
+                    i = i+1       
+            
         if len(listofHosts) > 0:
             #logging.debug("construct pushHostExchange Msg")
             try:
-                neighbourHost = self.hosts[neighbour] #check neighbour in hostlist
-                neighbourIP = neighbourHost.hostIP
-                neighbourPort = neighbourHost.hostPort
-                
                 pushMsg = message.HostExchangeMessage(neighbourIP, neighbourPort, self.port, "PUSH", listofHosts=listofHosts)
                 neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
                 #logging.debug("Pushed Hosts to %s" %(neighbour))
