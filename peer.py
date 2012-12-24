@@ -72,6 +72,9 @@ class Peer:
             key = h.constructKey(hostIP, hostPort)
             logging.debug("Initial Request for some peers from " + key)
             self.requestHosts(key, const.INI_PEERLIMIT) # and get some more hosts
+        else:
+            self.key = Host.constructKey(self.ip, self.port)
+            logging.info("You created a new Hachat-network. Your key is " + self.key)
         
         #start gui
         self.gui.run()
@@ -93,6 +96,8 @@ class Peer:
                 # set your own ip if you dont know it
                 if self.ip == "null":
                     self.ip = msg.recipientIP
+                    self.key = Host.constructKey(self.ip, self.port)
+                    logging.info("You're now connected to a Hachat-network. Your key is " + self.key)
                 
                 senderIP = addr[0]
                 key = Host.constructKey(senderIP, msg.senderPort)
