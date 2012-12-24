@@ -118,7 +118,7 @@ class Peer:
                     self.forwardMsg(msg)
                     self.gui.empfang(msg) #gibt nachricht an gui weiter 
                     
-                    key = Host.constructKey(msg.ip, msg.port)
+                    key = msg.origin
                     if key in self.hosts:
                         # if messag from host - update lastSeen
                         self.hosts[key].lastSeen = 1
@@ -130,7 +130,7 @@ class Peer:
                     logging.debug("received " + msg.text + " from " + msg.name)
                     
             elif isinstance(msg, message.ByeMessage):
-                key = Host.constructKey(msg.ip, msg.port)
+                key = msg.origin
                 if key in self.hosts:
                     del self.hosts[key]
                 if key in self.knownPeers:
@@ -160,22 +160,26 @@ class Peer:
 
     def sendText(self, text):
         if text != "":
-            msg = message.TextMessage(self.name, self.ip, self.port, text)
+            msg = message.TextMessage(self.name, self.key, self.key, text)
             for h in self.hosts.values():
-                #print "trying to send msg to %s:%s" %(recIP,recPort)
                 self.history.addMsg(msg) # add to own history
                 h.addToMsgQueue(msg)
 
     def forwardMsg(self, msg):
         '''forwarding TextMessage, but not to initial sender'''
-        msgSender = Host.constructKey(msg.ip, msg.port)
+        msgSender = msg.origin
+        # rewrite lastHop
+        oldLastHop = msg.lastHop
+        msg.lastHop = self.key
+        
         for h in self.hosts.values():
             hostAddr = Host.constructKey(h.hostIP, h.hostPort)
-            if msgSender != hostAddr:
+            # don't forward to origin or lastHop
+            if msgSender != hostAddr and oldLastHop != hostAddr:
                 #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
                 h.addToMsgQueue(msg)
             else:
-                logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender)
+                logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender + " and lastHop " + oldLastHop)
 
 
     def addToHosts(self, addr):
@@ -316,7 +320,7 @@ class Peer:
     def __del__(self):
         # tell other peers to delete your host
         logging.debug("sending BYE")
-        msg = message.ByeMessage(self.ip, self.port)
+        msg = message.ByeMessage(self.key)
         for h in self.hosts.values():
             h.addToMsgQueue(msg)
             h.__del__()

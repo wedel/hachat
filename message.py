@@ -131,45 +131,43 @@ class HistReqMessage(Message):
         
 class TextMessage(Message):
     ''' normal Text Messages
-    Message layout: | HEAD | type | uid | hash | sender name | sender ip | sender port | text | '''
+    Message layout: | HEAD | type | uid | hash | sender name | origin key | lastHop key | text | '''
     
-    def __init__(self, name, ip, port, text, uid=None):
+    def __init__(self, name, origin, lastHop, text, uid=None):
         super(TextMessage, self).__init__(uid)
         self.type = "TXT"
         self.name = name
-        if ip != None:
-                self.ip = ip
+        if origin != None:
+                self.origin = origin
         else:
                 raise MessageException("TextMessage: Sender-IP mustn't be None")
-        self.port = port
+        self.lastHop = lastHop
         self.text = text
         
         # make md5-hash over uid, name, text
         hasher = hashlib.md5()
         hasher.update(str(self.uid))
         hasher.update(self.name)
-        hasher.update(self.ip)
-        hasher.update(str(self.port))
+        hasher.update(self.origin)
         hasher.update(self.text)
         self.hash = hasher.hexdigest()
     
     def __str__(self):
         '''implements interface'''
-        string = ",".join([self.HEAD, self.type, str(self.uid), self.hash, self.name, self.ip, str(self.port), self.text])
+        string = ",".join([self.HEAD, self.type, str(self.uid), self.hash, self.name, self.origin, self.lastHop, self.text])
         return string
             
 class ByeMessage(Message):
     '''Message Type to be send when leaving'''
     
-    def __init__(self, ip, port, uid=None):
+    def __init__(self, origin, uid=None):
         super(ByeMessage, self).__init__(uid)
         self.type = "BYE"
-        self.ip = ip
-        self.port = port
+        self.origin = origin
     
     def __str__(self):
         '''implements interface'''
-        string = ",".join([self.HEAD, self.type, str(self.uid), self.ip, str(self.port)])
+        string = ",".join([self.HEAD, self.type, str(self.uid), self.origin])
         return string
             
 
@@ -215,27 +213,27 @@ def toMessage(string):
                     
     elif type == "TXT":
         try:
-            (hash, name, ip, port, text) = re.split(',', rest, 4) # get rest if message
+            (hash, name, origin, lastHop, text) = re.split(',', rest, 4) # get rest if message
                 
         except Exception, e:
             raise MessageException("malformed TextMessage recieved")
             print e
         
-        msg = TextMessage(name, ip, port, text, uid)
+        msg = TextMessage(name, origin, lastHop, text, uid)
         
          # test hash
         if msg.hash != hash:
-            raise MessageException("TextMessage has wrong hash")
+            raise MessageException("TextMessage has wrong hash " + str(msg))
         else:
             return msg # return good TextMessage
                     
     elif type == "BYE":
         try:
-            (ip, port) = re.split(',', rest, 1) # get rest of message
+            origin = str(rest) # get rest of message
         except Exception, e:
             raise MessageException("malformed ByeMessage recieved")
         
-        msg = ByeMessage(ip, port, uid)
+        msg = ByeMessage(origin, uid)
         return msg
     
     elif type == "HOSTEXCHANGE":
