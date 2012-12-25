@@ -124,6 +124,12 @@ class Peer:
                 except Exception, e:
                     logging.debug("Msg needs origin, but doesn't have one " + str(msg))
                     
+                try:
+                    # overriding sender with lastHop
+                    sender = msg.lastHop
+                except Exception, e:
+                    pass
+                    
                 if not sender in self.hosts:
                     logging.debug("We only accept Messages from Peers in Hostlist")
                 else:
