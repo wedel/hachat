@@ -107,6 +107,61 @@ class HostExchangeMessage(Message):
                 '''implements interface'''
                 string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.listofHosts)])
                 return string
+                
+class HistoryExchangeMessage(Message):
+        '''for request and pushing Hosts
+        Message layout: | HEAD | type | uid | recipientIP | recipientPort | origin key | level | quant | liste | '''
+        recipientIP = None
+        recipientPort = None
+        level = None
+        liste = None #list for everything
+        quant = None
+        
+        
+        def __init__(self, recipientIP, recipientPort, origin, level, quant=None, liste=None, uid=None):
+                super(HistoryExchangeMessage, self).__init__(uid)
+                self.type = "HISTORYEXCHANGE"
+                                
+                # set recipient and sender
+                if recipientIP == None or recipientPort == None:
+                        raise Exception("HistoryExchangeMessage needs recipient!")
+                else:
+                        self.recipientIP = recipientIP
+                        self.recipientPort = recipientPort
+                        
+                if origin == None:
+                        print self
+                        raise Exception("HistoryExchangeMessage needs origin - you must be connected to the network!")
+                else:
+                        self.origin = origin
+                        
+                if level == None:
+                    raise Exception("HistoryExchangeMessage needs level!")
+                else:
+                    self.level = level
+                    
+                    if self.level == "REQUEST":
+                        if quant == None:
+                            raise Exception("A Requesting HistoryExchangeMessage needs a defined quant of Msgs!")
+                        else: 
+                            self.quant = quant
+                            
+                    if self.level == "PUSH" or self.level == "PUSHMSGS":
+                        if liste == None:
+                            raise Exception("A Pushing HistoryExchangeMessage needs to have a list of History!")
+                        else:
+                            self.liste = liste
+                    
+                    if self.level == "REQUESTMSGS":
+                        if liste == None:
+                            raise Exception("A GetMsgs HistoryExchangeMessage needs a list of Msg Hashes to Request!")
+                        else:
+                            self.liste = liste
+                
+        def __str__(self):
+                '''implements interface'''
+                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.liste)])
+                return string
 
 
 class HistReqMessage(Message):
@@ -251,6 +306,32 @@ def toMessage(string):
             logging.debug("HostExchangeMessage: got PUSH")
             return msg # return good HostExchangeMessage
             
+    elif type == "HISTORYEXCHANGE":
+        try:
+            (recipientIP, recipientPort, origin, level, quant, liste) = re.split(',', rest, 5) # get rest if message
+        except Exception, e:
+            raise MessageException("malformed HistoryExchangeMessage recieved")
+            print e
+                
+        if level == "REQUEST":               
+            msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, quant=int(quant), uid=uid)
+            logging.debug("HostExchangeMessage: got REQUEST")
+            return msg # return good HistoryExchangeMessage
+        elif level == "PUSH":
+            evallist = eval(liste)
+            msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
+            logging.debug("HistorExchangeMessage: got PUSH")
+            return msg # return good HistoryExchangeMessage
+        elif level == "PUSHMSGS":
+            evallist = eval(liste)
+            msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
+            logging.debug("HistorExchangeMessage: got PUSHMSGS")
+            return msg # return good HistoryExchangeMessage
+        elif level == "REQUESTMSGS":
+            evallist = eval(liste)
+            msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
+            logging.debug("HistorExchangeMessage: got GETMSGS")
+            return msg # return good HistoryExchangeMessage
     else:
         raise MessageException("unknown type of message")
             
@@ -289,8 +370,8 @@ class History:
                 self.removeMsg(msgQuant,0)
         logging.debug("added msg to history")
 
-    def msgExists(self,msg):
-        if msg.hash in self.hashDic:
+    def msgExists(self,msghash):
+        if msghash in self.hashDic:
             return True
         else:
             return False
@@ -317,6 +398,22 @@ class History:
                 logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
             else:
                 raise MessageException('Can not remove hashes out of HashDict. Its to small')
+        
+    def getMsgHashes(self, msgQuant):
+        hashList = []
+        if len(self.msgDic) < msgQuant:
+            msgQuant = len(self.msgDic)
+                    
+        for i in range(0, msgQuant):
+            index = (len(self.msgDic)-i-1)
+            hashList.append(list(self.msgDic.keys())[index])
+        #return keys (hashes of msgs) of saved msgs
+        return hashList
+        
+    def getMsgObjects(self, msgHash):
+        msgstring = str(self.msgDic[msgHash])
+        #return value (msg objects) of saved msgs
+        return msgstring
 
                 
 

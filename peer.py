@@ -40,7 +40,7 @@ class Peer:
         self.port = int(self.inSocket.getsockname()[1]) # port where peer listens on
         logging.info("Listening on port " + str(self.port))
             
-        self.history = message.History(10,100)
+        self.history = message.History(const.HISTORY_SAVEDMSGSLIMIT,const.HISTORY_SAVEDHASHESLIMIT)
         
         self.gui = gui.gui(self)
         
@@ -77,6 +77,10 @@ class Peer:
             key = h.constructKey(hostIP, hostPort)
             logging.debug("Initial Request for some peers from " + key)
             self.requestHosts(key, const.INI_PEERLIMIT) # and get some more hosts
+            
+            #Initial Request for History
+            logging.debug("Initial Request for History from " + key)
+            self.getHistory(key)
         else:
             self.key = Host.constructKey(self.ip, self.port)
             logging.info("You created a new Hachat-network. Your key is " + self.key)
@@ -91,6 +95,8 @@ class Peer:
         logging.debug("RecvLoop started")
         while not self.gui.stop:
             (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
+            logging.debug("recieved msg with length: " + str(len(data)))
+
             # try to build Message object and decide what to do with it based on type
             try:
                 msg = message.toMessage(data)
@@ -135,7 +141,7 @@ class Peer:
                 else:
                 
                     if isinstance(msg, message.TextMessage):
-                        if not self.history.msgExists(msg) : # if i don't already know message
+                        if not self.history.msgExists(msg.hash) : # if i don't already know message
                             self.history.addMsg(msg)
                             self.forwardMsg(msg)
                             self.gui.empfang(msg) #gibt nachricht an gui weiter 
@@ -173,6 +179,26 @@ class Peer:
                                 self.addToHosts(h)      
                         else:
                             logging.warning("received HostExchangeMessage with unknown level!")
+                            
+                    elif isinstance(msg, message.HistoryExchangeMessage):
+                        neighbour = msg.origin
+                        logging.debug("received HistoryExchangeMessage: " + str(msg))
+                            
+                        if msg.level == "REQUEST":
+                            self.pushHistroy(neighbour,msg.quant)
+                            logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistroy()")
+                        elif msg.level == "PUSH": 
+                            logging.debug("received: HistoryExchangeMessage Push. Will enter HistoryControl")
+                            self.HistoryControl(neighbour,msg.liste)
+                        elif msg.level == "REQUESTMSGS":
+                            logging.debug("received: HistoryExchangeMessage REQUESTMSGS. Will enter pushMsgObjects")
+                            self.pushMsgObjects(neighbour, msg.liste)
+                        elif msg.level == "PUSHMSGS":
+                            logging.debug("received: HistoryExchangeMessage PUSHMSGS. Will enter NewMsgsForHistory")
+                            self.NewMsgsForHistory(msg.liste)
+                            
+                        else:
+                            logging.warning("received HistoryExchangeMessage with unknown level!")
                             
                     else:
                         logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
@@ -257,7 +283,7 @@ class Peer:
                         logging.debug("Request some peers from " + neighbour)
                         self.requestHosts(neighbour) # and get some more hosts
                     else:
-                        logging.error("You are not connected to the network!!! HostList as well as List of known Hosts is empty.")
+                        logging.error("You are not connected to the network!!! HostList as well as List of known Hosts are empty.")
                 
             # send HELO from all hosts in hostlist
             for h in self.hosts.values():
@@ -277,8 +303,13 @@ class Peer:
                     msg = host.msgQueue.popleft()
                     #convert to string to send over socket
                     msgStr = str(msg)
-                    logging.debug("sending msg: %s to %s:%i" %(msgStr, host.hostIP, host.hostPort))
+                    logging.debug("sending msg: %s to %s:%i with length %d" %(msgStr, host.hostIP, host.hostPort, len(msgStr)))
                     host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
+                    
+############################################################################
+##################### HostExchange  ########################################
+############################################################################
+
                     
     def requestHosts(self, neighbour, quant=None):
         '''request Hosts from neighbour'''
@@ -333,8 +364,109 @@ class Peer:
             #logging.debug("Pushed Hosts to %s" %(neighbour))
         else: 
             logging.debug("Can't push Hosts, no Hosts in HostList")
+            
+
+############################################################################
+##################### HistoryExchange  #####################################
+############################################################################
+            
+    def getHistory(self, neighbour):
+        '''request History from neigbour'''
+        try:
+            neighbourHost = self.hosts[neighbour]
+            neighbourIP = neighbourHost.hostIP
+            neighbourPort = neighbourHost.hostPort
+        except Exception:
+            raise message.MessageException("getHistory(): given neighbour needs to be a (IP,Port)Pair and needs to be in HostList")
+               
+        requestMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "REQUEST", quant=const.HISTORY_GETLIMIT)
+        neighbourHost.addToMsgQueue(requestMsg)# push it in hosts msgqueue
+        logging.debug("Requested History from %s" %(neighbour))
+        
     
+    def pushHistroy(self, neighbour, quant):
+        logging.debug("entered pushHistory, request for List of latest History")
+        List = self.history.getMsgHashes(quant)
+        
+        if len(List) > 0:
+            # get neighbour from hostlist
+            try:
+                neighbourHost = self.hosts[neighbour]
+                neighbourIP = neighbourHost.hostIP
+                neighbourPort = neighbourHost.hostPort
+            except Exception, e:
+                logging.error(str(e))
+                
+            logging.debug("construct pushHistoryExchange Msg")
+            pushMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "PUSH", liste=List)
+            neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
+            logging.debug("Pushed History to %s" %(neighbour))
+        else: 
+            logging.debug("Can't push History, no Msgs in History")
+
+    def HistoryControl(self, neighbour, historyList):
+        logging.debug("entered HistoryControle, will check our History...")
+        lostMsgHashes = []
+
+        for i in range(0, len(historyList)):
+            if self.history.msgExists(historyList[i]) == False:
+                lostMsgHashes.append(historyList[i])
+        
+        if len(lostMsgHashes) > 0:
+            logging.debug("have to request some History Msg Objects...")
+            try:
+                neighbourHost = self.hosts[neighbour]
+                neighbourIP = neighbourHost.hostIP
+                neighbourPort = neighbourHost.hostPort
+            except Exception, e:
+                logging.error(str(e))
+            # create GETMSGS msg:
+            getmsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "REQUESTMSGS", liste=lostMsgHashes)
+            neighbourHost.addToMsgQueue(getmsg)# push it in hosts msgqueue
+            logging.debug("Requested Msgs from %s" %(neighbour))
+        else: 
+            logging.debug("History Check found no Lost Msgs")
+        
+    def pushMsgObjects(self, neighbour, lostMsgHashes):
+        logging.debug("entered pushMsgObjects, will push History Msg Objects")
+        historyList = []
+        for i in range(0,len(lostMsgHashes)):
+            historyList.append(self.history.getMsgObjects(lostMsgHashes[i]))
+            historyList.reverse() # to push it in right order
+        
+        if len(historyList) > 0:
+            # get neighbour from hostlist
+            try:
+                neighbourHost = self.hosts[neighbour]
+                neighbourIP = neighbourHost.hostIP
+                neighbourPort = neighbourHost.hostPort
+            except Exception, e:
+                logging.error(str(e))
+                
+            logging.debug("construct pushMsgObjects Msg")
+            pushMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "PUSHMSGS", liste=historyList)
+            neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
+            logging.debug("Pushed History to %s" %(neighbour))
+        else: 
+            logging.debug("Can't push History, no Msgs in History")
+            
     
+    def NewMsgsForHistory(self, msgList):
+        logging.debug("entered NewMsgsForHistory, will push Msgs to History...")
+        for i in range(0,len(msgList)):
+            tomsg = message.toMessage(msgList[i])
+            self.history.addMsg(tomsg)
+            logging.debug("entered msg %s to History."%(msgList[i]))
+            self.gui.empfang(tomsg) #gibt nachricht an gui weiter
+            
+        logging.debug("NewMsgsForHistory finished")
+        
+
+############################################################################
+##################### __del__  #############################################
+############################################################################
+        
+
     def __del__(self):
         # tell other peers to delete your host
         logging.debug("sending BYE")
