@@ -385,6 +385,8 @@ class Peer:
         
     
     def pushHistroy(self, neighbour, quant):
+        '''push own List of History-Hashes to neighbour'''
+        
         logging.debug("entered pushHistory, request for List of latest History")
         List = self.history.getMsgHashes(quant)
         
@@ -405,6 +407,10 @@ class Peer:
             logging.debug("Can't push History, no Msgs in History")
 
     def HistoryControl(self, neighbour, historyList):
+        '''checks if the historyList from neighbour contains msgs wich are not
+        in own History. If so, it sends these lostMsg Hahses back and by this
+        requests the associated msgObjects'''
+        
         logging.debug("entered HistoryControle, will check our History...")
         lostMsgHashes = []
 
@@ -428,6 +434,8 @@ class Peer:
             logging.debug("History Check found no Lost Msgs")
         
     def pushMsgObjects(self, neighbour, lostMsgHashes):
+        '''pushes requested msgObjects back to neighbour'''
+        
         logging.debug("entered pushMsgObjects, will push History Msg Objects")
         historyList = []
         for i in range(0,len(lostMsgHashes)):
@@ -452,6 +460,8 @@ class Peer:
             
     
     def NewMsgsForHistory(self, msgList):
+        ''' enters not containing msgs to history and sends them to the gui'''
+        
         logging.debug("entered NewMsgsForHistory, will push Msgs to History...")
         for i in range(0,len(msgList)):
             tomsg = message.toMessage(msgList[i])
