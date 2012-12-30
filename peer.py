@@ -251,10 +251,11 @@ class Peer:
             logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
     
     def maintenanceLoop(self):
+        history_counter = self.counter
         while True:
             time.sleep(const.MAINTENANCE_SLEEP)
             logging.debug("maintenance start")
-            logging.debug("counter: " + str(self.counter))
+            logging.debug("counter: " + str(self.counter) + " ,history_counter: " + str(history_counter))
             
             # every 3 maintenance loops check if you have to delete host and fill Hostlist if needed
             if self.counter == 2:
@@ -286,13 +287,23 @@ class Peer:
                         self.requestHosts(neighbour) # and get some more hosts
                     else:
                         logging.error("You are not connected to the network!!! HostList as well as List of known Hosts are empty.")
+            
+            # every 6 maintenance loops make HistoryExchange 
+            if history_counter == 6:
+                if self.hosts:
+                    neighbour = random.choice(self.hosts.keys()) #pick a rand host from hostlist
+                    logging.debug("Request history from " + neighbour)
+                    self.getHistory(neighbour) # and get some more hosts
+                else:
+                    logging.error("You are not connected to the network!!! HostList is empty!")
                 
             # send HELO from all hosts in hostlist
             for h in self.hosts.values():
                 if h.lastSeen == 0: # but only if you haven't seen him for a while
                     h.sendHello()
 
-            self.counter = (self.counter + 1) % 3
+            self.counter = (self.counter + 1) % 3 
+            history_counter = (history_counter + 1) % 7 #odd number for not doing history and host exchange at the same time
             logging.debug("maintenance end")
             
     def sendLoop(self):
