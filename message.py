@@ -139,23 +139,25 @@ class HistoryExchangeMessage(Message):
                 else:
                     self.level = level
                     
-                    if self.level == "REQUEST":
+                    if self.level == "REQUEST" or self.level == "INIREQUEST":
                         if quant == None:
                             raise Exception("A Requesting HistoryExchangeMessage needs a defined quant of Msgs!")
                         else: 
                             self.quant = quant
                             
-                    if self.level == "PUSH" or self.level == "PUSHMSGS":
+                    elif self.level == "PUSH" or self.level == "PUSHMSGS":
                         if liste == None:
                             raise Exception("A Pushing HistoryExchangeMessage needs to have a list of History!")
                         else:
                             self.liste = liste
                     
-                    if self.level == "REQUESTMSGS":
+                    elif self.level == "REQUESTMSGS":
                         if liste == None:
                             raise Exception("A GetMsgs HistoryExchangeMessage needs a list of Msg Hashes to Request!")
                         else:
                             self.liste = liste
+                    else:
+                        logging.warning("HistoryExchangeMessage with unknown level!")
                 
         def __str__(self):
                 '''implements interface'''
@@ -316,6 +318,10 @@ def toMessage(string):
             msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, quant=int(quant), uid=uid)
             logging.debug("HostExchangeMessage: got REQUEST")
             return msg # return good HistoryExchangeMessage
+        elif level == "INIREQUEST":
+            msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, quant=int(quant), uid=uid)
+            logging.debug("HostExchangeMessage: got INIREQUEST")
+            return msg # return good HistoryExchangeMessage
         elif level == "PUSH":
             evallist = eval(liste)
             msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
@@ -408,6 +414,18 @@ class History:
             hashList.append(list(self.msgDic.keys())[index])
         #return keys (hashes of msgs) of saved msgs
         return hashList
+        
+    def getListMsgObjects(self, msgQuant):
+        msgList = []
+        if len(self.msgDic) < msgQuant:
+            msgQuant = len(self.msgDic)
+                    
+        for i in range(0, msgQuant):
+            index = (len(self.msgDic)-i-1)
+            msgstring = str(list(self.msgDic.values())[index])
+            msgList.append(msgstring)
+        #return list of values (msg objects) of saved msgs
+        return msgList
         
     def getMsgObjects(self, msgHash):
         msgstring = str(self.msgDic[msgHash])
