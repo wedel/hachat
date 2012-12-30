@@ -492,12 +492,14 @@ class Peer:
         ''' enters not containing msgs to history and sends them to the gui'''
         
         logging.debug("entered NewMsgsForHistory, will push Msgs to History...")
-        for i in range(0,len(msgList)):
-            tomsg = message.toMessage(msgList[i])
-            self.history.addMsg(tomsg)
-            logging.debug("entered msg %s to History."%(msgList[i]))
-            self.gui.empfang(tomsg) #gibt nachricht an gui weiter
-            
+        for o in msgList:
+            tomsg = message.toMessage(o)
+            if not self.history.msgSafed(tomsg):
+                self.history.addMsg(tomsg)
+                logging.debug("entered msg %s to History."%(o))
+                self.gui.empfang(tomsg) #gibt nachricht an gui weiter
+            else:
+                logging.debug("NewMsgsForHistory(): %s already in history"%(o))
         logging.debug("NewMsgsForHistory finished")
         
 
