@@ -62,16 +62,16 @@ class HeloMessage(Message):
 class HostExchangeMessage(Message):
         '''for request and pushing Hosts
         Message layout: | HEAD | type | uid | recipientIP | recipientPort | origin key | level | quant | listofHosts |'''
-        recipientIP = None
-        recipientPort = None
-        level = None
-        listofHosts = None
-        quant = None
+        
+        
         
         
         def __init__(self, recipientIP, recipientPort, origin, level, quant=None , listofHosts=None, uid=None):
                 super(HostExchangeMessage, self).__init__(uid)
                 self.type = "HOSTEXCHANGE"
+                self.level = None
+                self.listofHosts = None
+                self.quant = None
                                 
                 # set recipient and sender
                 if recipientIP == None or recipientPort == None:
@@ -111,16 +111,15 @@ class HostExchangeMessage(Message):
 class HistoryExchangeMessage(Message):
         '''for request and pushing Hosts
         Message layout: | HEAD | type | uid | recipientIP | recipientPort | origin key | level | quant | liste | '''
-        recipientIP = None
-        recipientPort = None
-        level = None
-        liste = None #list for everything
-        quant = None
+        
         
         
         def __init__(self, recipientIP, recipientPort, origin, level, quant=None, liste=None, uid=None):
                 super(HistoryExchangeMessage, self).__init__(uid)
                 self.type = "HISTORYEXCHANGE"
+                self.level = None #level of exchange
+                self.liste = None #list for everything
+                self.quant = None #quantity of exchanged msgs
                                 
                 # set recipient and sender
                 if recipientIP == None or recipientPort == None:
