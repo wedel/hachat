@@ -47,7 +47,7 @@ class Peer:
         # lock for hostlist (not needed atm)
         # self.hostlock = threading.RLock()
         
-        # start recieveLoop
+        # start receiveLoop
         self.recvThread = threading.Thread(target=self.startRecvLoop)
         self.recvThread.daemon = True
         self.recvThread.start()
@@ -91,11 +91,11 @@ class Peer:
 
 
     def startRecvLoop(self):
-        ''' general recieve loop of a peer '''
+        ''' general receive loop of a peer '''
         logging.debug("RecvLoop started")
         while not self.gui.stop:
             (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
-            logging.debug("recieved msg with length: " + str(len(data)))
+            logging.debug("received msg with length: " + str(len(data)))
 
             # try to build Message object and decide what to do with it based on type
             try:
@@ -163,7 +163,7 @@ class Peer:
                             del self.hosts[key]
                         if key in self.knownPeers:
                             del self.knownPeers[key]
-                        logging.debug("recieved BYE, deleting " + key)
+                        logging.debug("received BYE, deleting " + key)
                     
                     elif isinstance(msg, message.HostExchangeMessage):
                         neighbour = msg.origin
