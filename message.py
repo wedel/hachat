@@ -145,7 +145,7 @@ class HistoryExchangeMessage(Message):
                         else: 
                             self.quant = quant
                             
-                    elif self.level == "PUSH" or self.level == "PUSHMSGS":
+                    elif self.level == "PUSH":
                         if liste == None:
                             raise Exception("A Pushing HistoryExchangeMessage needs to have a list of History!")
                         else:
@@ -165,24 +165,7 @@ class HistoryExchangeMessage(Message):
                 return string
 
 
-class HistReqMessage(Message):
-    '''HistReqMessages are sent when a peer wants to request the history of another peer. quantity is the number of history entries the other peer should send uns back.
-    Message layout: | HEAD | type | uid | quantity | '''
 
-    def __init__(self, quantity, uid=None):
-        super(HistReqMessage, self).__init__(uid)
-        self.type = "HISTREQ"
-        
-        # set recipient and sender
-        if quantity == None:
-                raise MessageException("HistReqMessage needs quantity!")
-        else:
-                self.reqQuant = quantity
-    def __str__(self):
-        '''implements interface'''
-        string = ",".join([self.HEAD, self.type, str(self.uid), str(self.reqQuant)])
-        return string
-        
 class TextMessage(Message):
     ''' normal Text Messages
     Message layout: | HEAD | type | uid | hash | sender name | origin key | lastHop key | text | '''
@@ -327,11 +310,6 @@ def toMessage(string):
             msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
             logging.debug("HistorExchangeMessage: got PUSH")
             return msg # return good HistoryExchangeMessage
-        elif level == "PUSHMSGS":
-            evallist = eval(liste)
-            msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
-            logging.debug("HistorExchangeMessage: got PUSHMSGS")
-            return msg # return good HistoryExchangeMessage
         elif level == "REQUESTMSGS":
             evallist = eval(liste)
             msg = HistoryExchangeMessage(recipientIP, recipientPort, origin, level, liste=evallist, uid=uid)
@@ -351,8 +329,7 @@ class MessageException(Exception):
 class History:
     '''Klasse History speichert und ueberprueft Text-Msgs'''
 
-
-    def __init__(self, msgLimit=100, hashLimit=1000):
+    def __init__(self, msgLimit, hashLimit):
         self.msgDic = OrderedDict()  
         self.hashDic = deque()
         self.msgLimit = msgLimit
@@ -408,6 +385,7 @@ class History:
         hashList = []
         if len(self.msgDic) < msgQuant:
             msgQuant = len(self.msgDic)
+            logging.debug("reduced msgQuant to Length of msgDic") 
                     
         for i in range(0, msgQuant):
             index = (len(self.msgDic)-i-1)
@@ -419,13 +397,15 @@ class History:
         msgList = []
         if len(self.msgDic) < msgQuant:
             msgQuant = len(self.msgDic)
+            logging.debug("reduced msgQuant to Length of msgDic") 
                     
         for i in range(0, msgQuant):
             index = (len(self.msgDic)-i-1)
-            msgstring = str(list(self.msgDic.values())[index])
-            msgList.append(msgstring)
+            msg = list(self.msgDic.values())[index]
+            msgList.append(msg)
         #return list of values (msg objects) of saved msgs
         return msgList
+        
         
     def getMsgObjects(self, msgHash):
         msgstring = str(self.msgDic[msgHash])

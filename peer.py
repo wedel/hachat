@@ -1,4 +1,4 @@
-# coding=utf-8
+	# coding=utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
 import const
@@ -188,17 +188,14 @@ class Peer:
                             self.pushHistroy(neighbour,msg.quant)
                             logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistroy()")
                         elif msg.level == "INIREQUEST":
-                            self.initial_pushMsgObjects(neighbour,msg.quant)
-                            logging.debug("received: HistoryExchangeMessage Ininitial Request. Will enter initial_pushMsgObjects()")
+                            self.pushMsgObjects(neighbour)
+                            logging.debug("received: HistoryExchangeMessage Ininitial Request. Will push Msg Objects")
                         elif msg.level == "PUSH": 
                             logging.debug("received: HistoryExchangeMessage Push. Will enter HistoryControl")
                             self.HistoryControl(neighbour,msg.liste)
                         elif msg.level == "REQUESTMSGS":
                             logging.debug("received: HistoryExchangeMessage REQUESTMSGS. Will enter pushMsgObjects")
                             self.pushMsgObjects(neighbour, msg.liste)
-                        elif msg.level == "PUSHMSGS":
-                            logging.debug("received: HistoryExchangeMessage PUSHMSGS. Will enter NewMsgsForHistory")
-                            self.NewMsgsForHistory(msg.liste)
                         else:
                             logging.warning("received HistoryExchangeMessage with unknown level!")
                             
@@ -210,26 +207,30 @@ class Peer:
     def sendText(self, text):
         if text != "":
             msg = message.TextMessage(self.name, self.key, self.key, text)
+            self.history.addMsg(msg) # add to own history
             for h in self.hosts.values():
-                self.history.addMsg(msg) # add to own history
                 h.addToMsgQueue(msg)
 
-    def forwardMsg(self, msg):
-        '''forwarding TextMessage, but not to initial sender'''
+    def forwardMsg(self, msg, Oneneigbour=None):
+        '''forwarding TextMessage, but not to initial sender
+        if host is set, it will only forward to this single host'''
         msgSender = msg.origin
         # rewrite lastHop
         oldLastHop = msg.lastHop
         msg.lastHop = self.key
-        
-        for h in self.hosts.values():
-            hostAddr = Host.constructKey(h.hostIP, h.hostPort)
-            # don't forward to origin or lastHop
-            if msgSender != hostAddr and oldLastHop != hostAddr:
-                #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
-                h.addToMsgQueue(msg)
-            else:
-                logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender + " and lastHop " + oldLastHop)
-
+        if Oneneigbour == None:
+	        for h in self.hosts.values():
+	            hostAddr = Host.constructKey(h.hostIP, h.hostPort)
+	            # don't forward to origin or lastHop
+	            if msgSender != hostAddr and oldLastHop != hostAddr:
+	                #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
+	                h.addToMsgQueue(msg)
+	            else:
+	                logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender + " and lastHop " + oldLastHop)
+        else:
+            host = self.hosts[Oneneigbour]
+            host.addToMsgQueue(msg)
+            logging.debug("Will forward msg to " + Oneneigbour)
 
     def addToHosts(self, addr):
         '''check if already in hostlist otherwise add'''
@@ -404,7 +405,6 @@ class Peer:
     
     def pushHistroy(self, neighbour, quant):
         '''push own List of History-Hashes to neighbour'''
-        
         logging.debug("entered pushHistory, request for List of latest History")
         List = self.history.getMsgHashes(quant)
         
@@ -451,67 +451,28 @@ class Peer:
         else: 
             logging.debug("History Check found no Lost Msgs")
         
-    def pushMsgObjects(self, neighbour, lostMsgHashes):
+    def pushMsgObjects(self, neighbour, lostMsgHashes=None):
         '''pushes requested msgObjects back to neighbour'''
-        
         logging.debug("entered pushMsgObjects, will push History Msg Objects")
-        historyList = []
-        for o in lostMsgHashes:
-            historyList.append(self.history.getMsgObjects(o))
-        historyList.reverse() # to push it in right order
+        
+        if lostMsgHashes == None:
+			logging.debug("pushMsgObjects: will push last Msgs")
+			historyList = self.history.getListMsgObjects(const.HISTORY_INIGETLIMIT)
+			historyList.reverse() # to push it in right order
+        else:
+            historyList = []       
+            for o in lostMsgHashes:
+                historyList.append(self.history.getMsgObjects(o))
+                historyList.reverse() # to push it in right order
         
         if len(historyList) > 0:
-            # get neighbour from hostlist
-            try:
-                neighbourHost = self.hosts[neighbour]
-                neighbourIP = neighbourHost.hostIP
-                neighbourPort = neighbourHost.hostPort
-            except Exception, e:
-                logging.error(str(e))
-                
-            logging.debug("construct pushMsgObjects Msg")
-            pushMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "PUSHMSGS", liste=historyList)
-            neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
-            logging.debug("Pushed History to %s" %(neighbour))
+			for msg in historyList:
+				self.forwardMsg(msg, neighbour)
+				logging.debug("pushMsgObjects: pushed Msg %s to forwardMsg"%(msg.text))
         else: 
             logging.debug("Can't push History, no Msgs in History")
 
-    def initial_pushMsgObjects(self, neighbour, quant):
-        '''pushes requested msgObjects to neighbour for initial History Exchange'''
-        
-        logging.debug("entered initial_pushMsgObjects, will push History Msg Objects")
-        historyList = self.history.getListMsgObjects(quant)
-        historyList.reverse() # to push it in right order
-        
-        if len(historyList) > 0:
-            # get neighbour from hostlist
-            try:
-                neighbourHost = self.hosts[neighbour]
-                neighbourIP = neighbourHost.hostIP
-                neighbourPort = neighbourHost.hostPort
-            except Exception, e:
-                logging.error(str(e))
-                
-            logging.debug("construct pushMsgObjects Msg")
-            pushMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "PUSHMSGS", liste=historyList)
-            neighbourHost.addToMsgQueue(pushMsg)# push it in hosts msgqueue
-            logging.debug("Pushed History to %s" %(neighbour))
-        else: 
-            logging.debug("Can't push History, no Msgs in History")
-    
-    def NewMsgsForHistory(self, msgList):
-        ''' enters not containing msgs to history and sends them to the gui'''
-        
-        logging.debug("entered NewMsgsForHistory, will push Msgs to History...")
-        for o in msgList:
-            tomsg = message.toMessage(o)
-            if not self.history.msgSafed(tomsg):
-                self.history.addMsg(tomsg)
-                logging.debug("entered msg %s to History."%(o))
-                self.gui.empfang(tomsg) #gibt nachricht an gui weiter
-            else:
-                logging.debug("NewMsgsForHistory(): %s already in history"%(o))
-        logging.debug("NewMsgsForHistory finished")
+
         
 
 ############################################################################
