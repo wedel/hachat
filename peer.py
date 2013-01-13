@@ -21,6 +21,7 @@ class Peer:
         self.inSocket = None # Socket für eingehende Verbindungen
         self.hosts = {} # Dict. der bekannten Hosts
         self.knownPeers = {} # Dict (ip:port) : name
+        self.msgParts = {}
         
         # set own ip if you already know it
         if ip != None:
@@ -48,9 +49,9 @@ class Peer:
         # self.hostlock = threading.RLock()
         
         # start receiveLoop
-        self.recvThread = threading.Thread(target=self.startRecvLoop)
-        self.recvThread.daemon = True
-        self.recvThread.start()
+        self.rThread = threading.Thread(target=self.startRecvLoop)
+        self.rThread.daemon = True
+        self.rThread.start()
         
         # start sendLoop
         self.sThread = threading.Thread(target=self.sendLoop)
@@ -95,113 +96,158 @@ class Peer:
         logging.debug("RecvLoop started")
         while not self.gui.stop:
             (data, addr) = self.inSocket.recvfrom(const.HACHAT_BUFSIZE)
-            logging.debug("received msg with length: " + str(len(data)))
 
-            # try to build Message object and decide what to do with it based on type
-            try:
-                msg = message.toMessage(data)
-            except message.MessageException, e:
-                logging.warn("unrecognised message " + str(e))
+            # join the parts:
+
+            (HEAD, splitUID, part, numOfParts, rest) = re.split(',', data, 4)
+            splitUID = int(splitUID)
+            part = int(part)
+            numOfParts = int(numOfParts)
+            logging.debug("received msg with splitUID %i, part %i of %i with length %i" %(splitUID, part, numOfParts, len(data)))
+
+            # check if Hachat Message
+            if HEAD != const.HACHAT_HEADER:
+                raise message.MessageException("wrong Header: " + HEAD)
+                continue
+
+
+            # add part to msgParts:
+            if (splitUID, part, numOfParts) not in self.msgParts.keys():
+                self.msgParts[(splitUID, part, numOfParts)] = rest
+
+            # check whether the message is complete
+            i = 1
+            complete = True
+            while i <= numOfParts:
+                if (splitUID, i, numOfParts) not in self.msgParts.keys():
+                    complete = False
+                i += 1
+
+            if complete:
+                msgData = ""
+
+                i = 1
+                while i <= numOfParts:
+                    msgData += self.msgParts[(splitUID, i, numOfParts)]
+                    del self.msgParts[(splitUID, i, numOfParts)]
+                    i += 1
+
+                # try to build Message object and decide what to do with it based on type
+                try:
+                    msg = message.toMessage(msgData)
+                except message.MessageException, e:
+                    logging.warn("unrecognised message " + str(e))
+
+                # process the created message:
+                self.processMessage(msg, addr)
+
+
                 
-            if isinstance(msg, message.HeloMessage):
-                # set your own ip if you dont know it
-                if self.ip == "null":
-                    self.ip = msg.recipientIP
-                    self.key = Host.constructKey(self.ip, self.port)
-                    logging.info("You're now connected to a Hachat-network. Your key is " + self.key)
-                
-                senderIP = addr[0]
-                key = Host.constructKey(senderIP, msg.senderPort)
-                logging.debug("received: HELO from " + str(key))
-                
-                if key in self.hosts:
-                     # if you know Host set status that Host had contact
-                    host = self.hosts[key]
-                    host.lastSeen = 1 
-                    logging.debug(key + " already in hostlist - refreshing lastSeen")
-                else: 
-                    # add new host to hostlist
-                    self.addToHosts(key)
+    #END OF startRecvLoop
+
+    def processMessage(self, msg, fromAddr):
+        '''processes the received messages'''
+        if isinstance(msg, message.HeloMessage):
+            # set your own ip if you dont know it
+            if self.ip == "null":
+                self.ip = msg.recipientIP
+                self.key = Host.constructKey(self.ip, self.port)
+                logging.info("You're now connected to a Hachat-network. Your key is " + self.key)
             
-            # only accept Messages from Peers in self.hosts        
-            else:
-                try:
-                    sender = msg.origin
-                except Exception, e:
-                    logging.debug("Msg needs origin, but doesn't have one " + str(msg))
-                    
-                try:
-                    # overriding sender with lastHop
-                    sender = msg.lastHop
-                except Exception, e:
-                    pass
-                    
-                if not sender in self.hosts:
-                    logging.debug("We only accept Messages from Peers in Hostlist")
-                else:
+            senderIP = fromAddr[0]
+            key = Host.constructKey(senderIP, msg.senderPort)
+            logging.debug("received: HELO from " + str(key))
+            
+            if key in self.hosts:
+                 # if you know Host set status that Host had contact
+                host = self.hosts[key]
+                host.lastSeen = 1 
+                logging.debug(key + " already in hostlist - refreshing lastSeen")
+            else: 
+                # add new host to hostlist
+                self.addToHosts(key)
+        
+        # only accept Messages from Peers in self.hosts        
+        else:
+            try:
+                sender = msg.origin
+            except Exception, e:
+                logging.debug("Msg needs origin, but doesn't have one " + str(msg))
                 
-                    if isinstance(msg, message.TextMessage):
-                        if not self.history.msgExists(msg.hash) : # if i don't already know message
-                            self.history.addMsg(msg)
-                            self.forwardMsg(msg)
-                            self.gui.empfang(msg) #gibt nachricht an gui weiter 
-                            
-                            key = msg.origin
-                            if key in self.hosts:
-                                # if messag from host - update lastSeen
-                                self.hosts[key].lastSeen = 1
-                            else:
-                                # add to knownPeers
-                                self.knownPeers[key] = msg.name
-                            #logging.debug(str(self.knownPeers.keys()))
-                            
-                            logging.debug("received " + msg.text + " from " + msg.name)
-                            
-                    elif isinstance(msg, message.ByeMessage):
+            try:
+                # overriding sender with lastHop
+                sender = msg.lastHop
+            except Exception, e:
+                pass
+                
+            if not sender in self.hosts:
+                logging.debug("We only accept Messages from Peers in Hostlist")
+            else:
+            
+                if isinstance(msg, message.TextMessage):
+                    if not self.history.msgExists(msg.hash) : # if i don't already know message
+                        self.history.addMsg(msg)
+                        self.forwardMsg(msg)
+                        self.gui.empfang(msg) #gibt nachricht an gui weiter 
+                        
                         key = msg.origin
                         if key in self.hosts:
-                            del self.hosts[key]
-                        if key in self.knownPeers:
-                            del self.knownPeers[key]
-                        logging.debug("received BYE, deleting " + key)
-                    
-                    elif isinstance(msg, message.HostExchangeMessage):
-                        neighbour = msg.origin
-                        logging.debug("received HostExchangeMessage: " + str(msg))
-                            
-                        if msg.level == "REQUEST":
-                            self.pushHosts(neighbour, msg.quant)
-                            logging.debug("received: HostExchangeMessage Request. Will enter pushHosts()")
-                            
-                        elif msg.level == "PUSH": # add hosts to HostList
-                            logging.debug("received: HostExchangeMessage Push. Will add Hosts to HostList")
-                            for h in msg.listofHosts:
-                                self.addToHosts(h)      
+                            # if messag from host - update lastSeen
+                            self.hosts[key].lastSeen = 1
                         else:
-                            logging.warning("received HostExchangeMessage with unknown level!")
-                            
-                    elif isinstance(msg, message.HistoryExchangeMessage):
-                        neighbour = msg.origin
-                        logging.debug("received HistoryExchangeMessage: " + str(msg))
-                            
-                        if msg.level == "REQUEST":
-                            self.pushHistroy(neighbour,msg.quant)
-                            logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistroy()")
-                        elif msg.level == "INIREQUEST":
-                            self.pushMsgObjects(neighbour)
-                            logging.debug("received: HistoryExchangeMessage Ininitial Request. Will push Msg Objects")
-                        elif msg.level == "PUSH": 
-                            logging.debug("received: HistoryExchangeMessage Push. Will enter HistoryControl")
-                            self.HistoryControl(neighbour,msg.liste)
-                        elif msg.level == "REQUESTMSGS":
-                            logging.debug("received: HistoryExchangeMessage REQUESTMSGS. Will enter pushMsgObjects")
-                            self.pushMsgObjects(neighbour, msg.liste)
-                        else:
-                            logging.warning("received HistoryExchangeMessage with unknown level!")
-                            
+                            # add to knownPeers
+                            self.knownPeers[key] = msg.name
+                        #logging.debug(str(self.knownPeers.keys()))
+                        
+                        logging.debug("received " + msg.text + " from " + msg.name)
+                        
+                elif isinstance(msg, message.ByeMessage):
+                    key = msg.origin
+                    if key in self.hosts:
+                        del self.hosts[key]
+                    if key in self.knownPeers:
+                        del self.knownPeers[key]
+                    logging.debug("received BYE, deleting " + key)
+                
+                elif isinstance(msg, message.HostExchangeMessage):
+                    neighbour = msg.origin
+                    logging.debug("received HostExchangeMessage: " + str(msg))
+                        
+                    if msg.level == "REQUEST":
+                        self.pushHosts(neighbour, msg.quant)
+                        logging.debug("received: HostExchangeMessage Request. Will enter pushHosts()")
+                        
+                    elif msg.level == "PUSH": # add hosts to HostList
+                        logging.debug("received: HostExchangeMessage Push. Will add Hosts to HostList")
+                        for h in msg.listofHosts:
+                            self.addToHosts(h)      
                     else:
-                        logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
-                        logging.warn(type(msg))
+                        logging.warning("received HostExchangeMessage with unknown level!")
+                        
+                elif isinstance(msg, message.HistoryExchangeMessage):
+                    neighbour = msg.origin
+                    logging.debug("received HistoryExchangeMessage: " + str(msg))
+                        
+                    if msg.level == "REQUEST":
+                        self.pushHistroy(neighbour,msg.quant)
+                        logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistroy()")
+                    elif msg.level == "INIREQUEST":
+                        self.pushMsgObjects(neighbour)
+                        logging.debug("received: HistoryExchangeMessage Ininitial Request. Will push Msg Objects")
+                    elif msg.level == "PUSH": 
+                        logging.debug("received: HistoryExchangeMessage Push. Will enter HistoryControl")
+                        self.HistoryControl(neighbour,msg.liste)
+                    elif msg.level == "REQUESTMSGS":
+                        logging.debug("received: HistoryExchangeMessage REQUESTMSGS. Will enter pushMsgObjects")
+                        self.pushMsgObjects(neighbour, msg.liste)
+                    else:
+                        logging.warning("received HistoryExchangeMessage with unknown level!")
+                        
+                else:
+                    logging.warn("hier sollte der Code nie ankommen, sonst gibt es unbekannte Message Unterklassen")
+                    logging.warn(type(msg))
+    #END OF processMessage
+
 
 
     def sendText(self, text):
@@ -317,8 +363,25 @@ class Peer:
                     msg = host.msgQueue.popleft()
                     #convert to string to send over socket
                     msgStr = str(msg)
-                    logging.debug("sending msg: %s to %s:%i with length %d" %(msgStr, host.hostIP, host.hostPort, len(msgStr)))
-                    host.outSocket.sendto(msgStr, (host.hostIP, host.hostPort))
+
+                    # create splitUID
+                    splitUID = random.randint(0, 999999)
+
+                    # check in how many parts the message has to be splitted
+                    msgLen = len(msgStr)
+                    maxMsgLen = int(const.HACHAT_BUFSIZE - len(str(splitUID)) - len(const.HACHAT_HEADER)) - 10 # 10 for some space for the part and numOfParts variables
+                    numOfParts = (msgLen / maxMsgLen) + 1
+                    logging.debug("splitting message %s of length %i into %i parts (maxMsgLen is %i)" % (msgStr, msgLen, numOfParts, maxMsgLen))
+                    part = 1
+                    while len(msgStr) > 0:
+                        partStr = ",".join([const.HACHAT_HEADER, str(splitUID), str(part), str(numOfParts), msgStr[:maxMsgLen]])
+                        msgStr = msgStr[maxMsgLen:]
+
+                        logging.debug("sending msg part %i of %i: \"%s\" to %s:%i with length %d" %(part, numOfParts, partStr, host.hostIP, host.hostPort, len(partStr)))
+
+                        # send the part
+                        host.outSocket.sendto(partStr, (host.hostIP, host.hostPort))
+                        part += 1
                     
 ############################################################################
 ##################### HostExchange  ########################################

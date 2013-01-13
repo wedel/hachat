@@ -12,7 +12,6 @@ class Message(object): # inherit from object
     def __init__(self, uid):
         ''' build Message with supplied uid
         or otherwise get a random uid'''
-        self.HEAD = const.HACHAT_HEADER
         self.type = None
         self.uid = None
         
@@ -29,7 +28,7 @@ class Message(object): # inherit from object
             
 class HeloMessage(Message):
     '''regularly sent HELO Message which exchange information on IP and Port
-    Message layout: | HEAD | type | uid | recipientIP | recipientPort | senderIP | senderPort | '''
+    Message layout: | type | uid | recipientIP | recipientPort | senderIP | senderPort | '''
     
     
     def __init__(self, recipientIP, recipientPort, senderIP, senderPort, uid=None):
@@ -55,13 +54,12 @@ class HeloMessage(Message):
             
     def __str__(self):
         '''implements interface'''
-        string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
-        # string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), str(self.senderPort)])
+        string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.senderIP, str(self.senderPort)])
         return string
 
 class HostExchangeMessage(Message):
         '''for request and pushing Hosts
-        Message layout: | HEAD | type | uid | recipientIP | recipientPort | origin key | level | quant | listofHosts |'''
+        Message layout: | type | uid | recipientIP | recipientPort | origin key | level | quant | listofHosts |'''
         
         
         
@@ -105,12 +103,12 @@ class HostExchangeMessage(Message):
                 
         def __str__(self):
                 '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.listofHosts)])
+                string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.listofHosts)])
                 return string
                 
 class HistoryExchangeMessage(Message):
         '''for request and pushing Hosts
-        Message layout: | HEAD | type | uid | recipientIP | recipientPort | origin key | level | quant | liste | '''
+        Message layout: | type | uid | recipientIP | recipientPort | origin key | level | quant | liste | '''
         
         
         
@@ -161,14 +159,14 @@ class HistoryExchangeMessage(Message):
                 
         def __str__(self):
                 '''implements interface'''
-                string = ",".join([self.HEAD, self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.liste)])
+                string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.liste)])
                 return string
 
 
 
 class TextMessage(Message):
     ''' normal Text Messages
-    Message layout: | HEAD | type | uid | hash | sender name | origin key | lastHop key | text | '''
+    Message layout: | type | uid | hash | sender name | origin key | lastHop key | text | '''
     
     def __init__(self, name, origin, lastHop, text, uid=None):
         super(TextMessage, self).__init__(uid)
@@ -191,7 +189,7 @@ class TextMessage(Message):
     
     def __str__(self):
         '''implements interface'''
-        string = ",".join([self.HEAD, self.type, str(self.uid), self.hash, self.name, self.origin, self.lastHop, self.text])
+        string = ",".join([self.type, str(self.uid), self.hash, self.name, self.origin, self.lastHop, self.text])
         return string
             
 class ByeMessage(Message):
@@ -204,23 +202,20 @@ class ByeMessage(Message):
     
     def __str__(self):
         '''implements interface'''
-        string = ",".join([self.HEAD, self.type, str(self.uid), self.origin])
+        string = ",".join([self.type, str(self.uid), self.origin])
         return string
             
 
 def toMessage(string):
     '''construct Message type from string'''
     try:
-        (HEAD, type, uid, rest) = re.split(',', string, 3) # get first part of message
+        (type, uid, rest) = re.split(',', string, 2) # get first part of message
         uid = int(uid)
             
     except Exception, e:
         print e
         raise MessageException("malformed Message recieved")
             
-     # check if Hachat Message
-    if HEAD != const.HACHAT_HEADER:
-        raise MessageException("wrong Header: " + HEAD)
             
     # decide on type of message        
     if type == "HELO":
