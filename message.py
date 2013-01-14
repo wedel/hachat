@@ -403,9 +403,9 @@ class History:
         
         
     def getMsgObjects(self, msgHash):
-        msgstring = str(self.msgDic[msgHash])
+        msg = self.msgDic[msgHash]
         #return value (msg objects) of saved msgs
-        return msgstring
+        return msg
 
                 
 
