@@ -117,6 +117,13 @@ class Peer:
                 self.msgParts[splitUID]["lastSeen"] = time.time()
                 self.msgParts[splitUID]["parts"] = {}
 
+                # get the hash from the first part of a TXT-msg
+                if part == 1:
+                    (type, hash, stuff) = re.split(",", rest, 2)
+                    self.msgParts[splitUID]["type"] = type
+                    if type == "TXT":
+                        self.msgParts[splitUID]["hash"] = hash
+
             # add part to msgParts:
             if part not in self.msgParts[splitUID]["parts"].keys():
                 self.msgParts[splitUID]["parts"][part] = rest
@@ -151,6 +158,8 @@ class Peer:
                         marked.append(tmpUID)
 
             for markedUID in marked:
+                if self.msgParts[markedUID]["type"] == "TXT":
+
                 del self.msgParts[markedUID]
 
                 
@@ -240,8 +249,8 @@ class Peer:
                     logging.debug("received HistoryExchangeMessage: " + str(msg))
                         
                     if msg.level == "REQUEST":
-                        self.pushHistroy(neighbour,msg.quant)
-                        logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistroy()")
+                        self.pushHistory(neighbour,msg.quant)
+                        logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistory()")
                     elif msg.level == "INIREQUEST":
                         self.pushMsgObjects(neighbour)
                         logging.debug("received: HistoryExchangeMessage Ininitial Request. Will push Msg Objects")
@@ -480,7 +489,7 @@ class Peer:
         logging.debug("Requested History from %s" %(neighbour))
         
     
-    def pushHistroy(self, neighbour, quant):
+    def pushHistory(self, neighbour, quant):
         '''push own List of History-Hashes to neighbour'''
         logging.debug("entered pushHistory, request for List of latest History")
         List = self.history.getMsgHashes(quant)
