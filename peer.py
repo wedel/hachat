@@ -111,36 +111,47 @@ class Peer:
                 continue
 
 
+            if splitUID not in self.msgParts.keys():
+                self.msgParts[splitUID] = {}
+                self.msgParts[splitUID]["numOfParts"] = numOfParts
+                self.msgParts[splitUID]["lastSeen"] = time.time()
+                self.msgParts[splitUID]["parts"] = {}
+
             # add part to msgParts:
-            if (splitUID, part, numOfParts) not in self.msgParts.keys():
-                self.msgParts[(splitUID, part, numOfParts)] = rest
+            if part not in self.msgParts[splitUID]["parts"].keys():
+                self.msgParts[splitUID]["parts"][part] = rest
+                self.msgParts[splitUID]["lastSeen"] = time.time()
 
-            # check whether the message is complete
-            i = 1
-            complete = True
-            while i <= numOfParts:
-                if (splitUID, i, numOfParts) not in self.msgParts.keys():
-                    complete = False
-                i += 1
+            marked = []
 
-            if complete:
-                msgData = ""
+            for tmpUID in self.msgParts.keys():
+                now = time.time()
+                # check whether the message is complete
+                if self.msgParts[tmpUID]["numOfParts"] == len(self.msgParts[tmpUID]["parts"]):
+                    i = 1
+                    msgData = ""
+                    while i <= self.msgParts[tmpUID]["numOfParts"]:
+                        msgData += self.msgParts[tmpUID]["parts"][i]
+                        i += 1
+                    marked.append(tmpUID)
+                    # try to build Message object and decide what to do with it based on type
+                    try:
+                        msg = message.toMessage(msgData)
+                    except message.MessageException, e:
+                        logging.warn("unrecognised message " + str(e))
 
-                i = 1
-                while i <= numOfParts:
-                    msgData += self.msgParts[(splitUID, i, numOfParts)]
-                    del self.msgParts[(splitUID, i, numOfParts)]
-                    i += 1
+                    # process the created message:
+                    self.processMessage(msg, addr)
 
-                # try to build Message object and decide what to do with it based on type
-                try:
-                    msg = message.toMessage(msgData)
-                except message.MessageException, e:
-                    logging.warn("unrecognised message " + str(e))
+                # if not complete
+                else: 
+                    # when came the last part?
+                    if now - self.msgParts[tmpUID]["lastSeen"] > 300.0: # after 5 min, delete all parts of the splitUID tmp
+                        logging.debug("5 Minutes have passed since we saw %i, deleting it", tmpUID)
+                        marked.append(tmpUID)
 
-                # process the created message:
-                self.processMessage(msg, addr)
-
+            for markedUID in marked:
+                del self.msgParts[markedUID]
 
                 
     #END OF startRecvLoop
@@ -369,10 +380,13 @@ class Peer:
 
                     # check in how many parts the message has to be splitted
                     msgLen = len(msgStr)
-                    maxMsgLen = int(const.HACHAT_BUFSIZE - len(str(splitUID)) - len(const.HACHAT_HEADER)) - 10 # 10 for some space for the part and numOfParts variables
+                    maxMsgLen = const.HACHAT_BUFSIZE - len(str(splitUID)) - len(const.HACHAT_HEADER) - 10 # 10 for some space for the part and numOfParts variables
+                    logging.debug("%i - %i - %i - 10 = %i" % (const.HACHAT_BUFSIZE, len(str(splitUID)), len(const.HACHAT_HEADER), maxMsgLen))
                     numOfParts = (msgLen / maxMsgLen) + 1
                     logging.debug("splitting message %s of length %i into %i parts (maxMsgLen is %i)" % (msgStr, msgLen, numOfParts, maxMsgLen))
                     part = 1
+
+                    # while there are parts left, construct and send them
                     while len(msgStr) > 0:
                         partStr = ",".join([const.HACHAT_HEADER, str(splitUID), str(part), str(numOfParts), msgStr[:maxMsgLen]])
                         msgStr = msgStr[maxMsgLen:]
