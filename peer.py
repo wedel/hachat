@@ -158,8 +158,6 @@ class Peer:
                         marked.append(tmpUID)
 
             for markedUID in marked:
-                if self.msgParts[markedUID]["type"] == "TXT":
-
                 del self.msgParts[markedUID]
 
                 
