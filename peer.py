@@ -4,6 +4,7 @@
 import const
 import socket
 import threading
+import string
 import message
 import time
 import random
@@ -15,7 +16,7 @@ import gui
 class Peer:
     """ Peer Klasse """
 
-    def __init__(self, firstHost = None, port = None, name = "temp", ip = None):
+    def __init__(self, firstHost = None, port = None, name = "temp", ip = None, testmode = False):
         
         self.name = name # set peer name
         self.inSocket = None # Socket für eingehende Verbindungen
@@ -54,9 +55,16 @@ class Peer:
         self.rThread.start()
         
         # start sendLoop
-        self.sThread = threading.Thread(target=self.sendLoop)
-        self.sThread.daemon = True
-        self.sThread.start()
+        if testmode == True:
+            #if testmode is true, sendLoop will drop random parts of msgs
+            self.sThread = threading.Thread(target=self.sendLoop, args=(True,))
+            self.sThread.daemon = True
+            self.sThread.start()
+        else:
+            self.sThread = threading.Thread(target=self.sendLoop, args=(False,))
+            self.sThread.daemon = True
+            self.sThread.start()
+            
         
         # start maintenance Loop
         self.counter = 0
@@ -85,6 +93,9 @@ class Peer:
         else:
             self.key = Host.constructKey(self.ip, self.port)
             logging.info("You created a new Hachat-network. Your key is " + self.key)
+        
+        if testmode == True:
+            self.generateMsgParts(10,3000) #generates Randome Text-Msgs
         
         #start gui
         self.gui.run()
@@ -371,9 +382,13 @@ class Peer:
             history_counter = (history_counter + 1) % 7 #odd number for not doing history and host exchange at the same time
             logging.debug("maintenance end")
             
-    def sendLoop(self):
+    def sendLoop(self, test=False):
         '''send Message objects of all hosts from Queue as string'''
-        logging.debug("starting sendLoop")
+        if test==False:
+            logging.debug("starting sendLoop")
+        if test==True:
+            logging.debug("starting sendLoop in test-Mode, will erase random parts of msgs")
+            
         while True:
             time.sleep(0.1)
             for host in self.hosts.values():
@@ -397,7 +412,14 @@ class Peer:
                     while len(msgStr) > 0:
                         partStr = ",".join([const.HACHAT_HEADER, str(splitUID), str(part), str(numOfParts), msgStr[:maxMsgLen]])
                         msgStr = msgStr[maxMsgLen:]
-
+                        
+                        if test==True and part > 1:
+                            #will drop random parts of the msg for testing
+                            if random.randrange(0,5) == 2:
+                                logging.debug("will drop msg-part %d" %(part))
+                                part += 1
+                                continue
+                                
                         logging.debug("sending msg part %i of %i: \"%s\" to %s:%i with length %d" %(part, numOfParts, partStr, host.hostIP, host.hostPort, len(partStr)))
 
                         # send the part
@@ -573,3 +595,15 @@ class Peer:
             h.__del__()
             
         self.inSocket.close()
+        
+############################################################################
+##################### test & debug  ########################################
+############################################################################
+        
+    def generateMsgParts(self, quant=5, length=2000):
+        '''generates random TextMsgs, if length > 1000
+        there will be more then one msg-part'''
+        texts = ["Test" + ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(length-len("Test")+1)) for i in range(quant)]
+        logging.debug("will send generated text-msgs")
+        for t in texts:
+            self.sendText(t)

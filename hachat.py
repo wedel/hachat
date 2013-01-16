@@ -17,6 +17,7 @@ parser.add_argument("-l", "--link", help="hachat link (ex. localhost:12345)")
 parser.add_argument("-p", "--port", help="Port to listen on")
 parser.add_argument("-n", "--name", help="set own name")
 parser.add_argument("-i", "--ip", help="ip-adresse where you can be reached")
+parser.add_argument("-T", "--Test", action="store_true", default=False, help="for testing the network")
 
 args = parser.parse_args()
 
@@ -32,10 +33,16 @@ if name == None:
 
 if args.link != None:
     (hostIP, hostPort) = re.split(":", args.link, 1)
-    peer = Peer(firstHost = (hostIP, hostPort), port = args.port, name = name)
+    if args.Test == True:
+        peer = Peer(firstHost = (hostIP, hostPort), port = args.port, name = name, testmode=True)
+    else:
+        peer = Peer(firstHost = (hostIP, hostPort), port = args.port, name = name)
 else:
     if args.ip:
-        peer = Peer(ip = args.ip, port = args.port, name = name)
+        if args.Test == True:
+            peer = Peer(ip = args.ip, port = args.port, name = name, testmode=True)
+        else:
+            peer = Peer(ip = args.ip, port = args.port, name = name)
     else:
         print "You need a link or your own ip adress to start hachat!"
 
