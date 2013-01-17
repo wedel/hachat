@@ -128,19 +128,13 @@ class Peer:
                 self.msgParts[splitUID]["lastSeen"] = time.time()
                 self.msgParts[splitUID]["parts"] = {}
 
-                # get the hash from the first part of a TXT-msg
-                if part == 1:
-                    (type, hash, stuff) = re.split(",", rest, 2)
-                    self.msgParts[splitUID]["type"] = type
-                    if type == "TXT":
-                        self.msgParts[splitUID]["hash"] = hash
-
             # add part to msgParts:
             if part not in self.msgParts[splitUID]["parts"].keys():
                 self.msgParts[splitUID]["parts"][part] = rest
                 self.msgParts[splitUID]["lastSeen"] = time.time()
 
             marked = []
+            histExNeeded = False
 
             for tmpUID in self.msgParts.keys():
                 now = time.time()
@@ -167,8 +161,16 @@ class Peer:
                     if now - self.msgParts[tmpUID]["lastSeen"] > 300.0: # after 5 min, delete all parts of the splitUID tmp
                         logging.debug("5 Minutes have passed since we saw %i, deleting it", tmpUID)
                         marked.append(tmpUID)
+                        histExNeeded = True
 
             for markedUID in marked:
+                if histExNeeded:
+                    if self.hosts:
+                        neighbour = random.choice(self.hosts.keys()) #pick a rand host from hostlist
+                        logging.debug("Request history from " + neighbour)
+                        self.getHistory(neighbour) # and get some more hosts
+                    else:
+                        logging.error("You are not connected to the network!!! HostList is empty!")
                 del self.msgParts[markedUID]
 
                 
