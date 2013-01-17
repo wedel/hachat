@@ -532,8 +532,8 @@ class Peer:
 
     def HistoryControl(self, neighbour, historyList):
         '''checks if the historyList from neighbour contains msgs wich are not
-        in own History. If so, it sends these lostMsg Hahses back and by this
-        requests the associated msgObjects'''
+        in own History. If so, these lostMsg Hahses will be pushed back and by this
+        the associated msgObjects are requested. '''
         
         logging.debug("entered HistoryControle, will check our History...")
         lostMsgHashes = []
