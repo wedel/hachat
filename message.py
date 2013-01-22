@@ -1,7 +1,8 @@
 # coding=utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
-import const
+'''module which provides all message types for hachat'''
+
 import re
 import random
 import hashlib
@@ -9,6 +10,8 @@ from collections import OrderedDict, deque
 import logging
 
 class Message(object): # inherit from object
+    '''abstract class all other message types will inherit from'''
+
     def __init__(self, uid):
         ''' build Message with supplied uid
         or otherwise get a random uid'''
@@ -18,9 +21,9 @@ class Message(object): # inherit from object
         super(Message, self).__init__() # inherit from object
         # set unifier
         if uid == None:
-                self.uid = random.randint(0, 999999)
+            self.uid = random.randint(0, 999999)
         else:
-                self.uid = uid
+            self.uid = uid
 
     def __str__(self):
         '''cast Message to string'''
@@ -40,17 +43,17 @@ class HeloMessage(Message):
         
         # set recipient and sender
         if recipientIP == None or recipientPort == None:
-                raise MessageException("HeloMessage needs recipient!")
+            raise MessageException("HeloMessage needs recipient!")
         else:
-                self.recipientIP = recipientIP
-                self.recipientPort = recipientPort
+            self.recipientIP = recipientIP
+            self.recipientPort = recipientPort
         if senderIP == None or senderPort == None:
-        #if senderPort == None:
-                print self
-                raise MessageException("HeloMessage needs sender!")
+            #if senderPort == None:
+            print self
+            raise MessageException("HeloMessage needs sender!")
         else:
-                self.senderIP = senderIP
-                self.senderPort = senderPort
+            self.senderIP = senderIP
+            self.senderPort = senderPort
             
     def __str__(self):
         '''implements interface'''
@@ -58,109 +61,109 @@ class HeloMessage(Message):
         return string
 
 class HostExchangeMessage(Message):
-        '''for request and pushing Hosts
-        Message layout: | type | uid | recipientIP | recipientPort | origin key | level | quant | listofHosts |'''
-        
-        
-        
-        
-        def __init__(self, recipientIP, recipientPort, origin, level, quant=None , listofHosts=None, uid=None):
-                super(HostExchangeMessage, self).__init__(uid)
-                self.type = "HOSTEXCHANGE"
-                self.level = None
-                self.listofHosts = None
-                self.quant = None
-                                
-                # set recipient and sender
-                if recipientIP == None or recipientPort == None:
-                        raise Exception("HostExchangeMessage needs recipient!")
-                else:
-                        self.recipientIP = recipientIP
-                        self.recipientPort = recipientPort
+    '''for request and pushing Hosts
+    Message layout: | type | uid | recipientIP | recipientPort | origin key | level | quant | listofHosts |'''
+    
+    
+    
+    
+    def __init__(self, recipientIP, recipientPort, origin, level, quant=None , listofHosts=None, uid=None):
+        super(HostExchangeMessage, self).__init__(uid)
+        self.type = "HOSTEXCHANGE"
+        self.level = None
+        self.listofHosts = None
+        self.quant = None
                         
-                if origin == None:
-                        print self
-                        raise Exception("HostExchangeMessage needs origin - you must be connected to the network!")
-                else:
-                        self.origin = origin
-                        
-                if level == None:
-                    raise Exception("HostExchangeMessage needs level!")
-                else:
-                    self.level = level
-                    
-                    if self.level == "REQUEST":
-                        if quant == None:
-                            raise Exception("A Requesting HostExchangeMessage needs a defined quant of Hosts!")
-                        else: 
-                            self.quant = quant
-                            
-                    if self.level == "PUSH":
-                        if listofHosts == None:
-                            raise Exception("A Pushing HostExchangeMessage needs to have a list of Hosts defined!")
-                        else:
-                            self.listofHosts = listofHosts
+        # set recipient and sender
+        if recipientIP == None or recipientPort == None:
+            raise Exception("HostExchangeMessage needs recipient!")
+        else:
+            self.recipientIP = recipientIP
+            self.recipientPort = recipientPort
                 
-        def __str__(self):
-                '''implements interface'''
-                string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.listofHosts)])
-                return string
+        if origin == None:
+            print self
+            raise Exception("HostExchangeMessage needs origin - you must be connected to the network!")
+        else:
+            self.origin = origin
+                
+        if level == None:
+            raise Exception("HostExchangeMessage needs level!")
+        else:
+            self.level = level
+            
+            if self.level == "REQUEST":
+                if quant == None:
+                    raise Exception("A Requesting HostExchangeMessage needs a defined quant of Hosts!")
+                else: 
+                    self.quant = quant
+                    
+            if self.level == "PUSH":
+                if listofHosts == None:
+                    raise Exception("A Pushing HostExchangeMessage needs to have a list of Hosts defined!")
+                else:
+                    self.listofHosts = listofHosts
+            
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.listofHosts)])
+        return string
                 
 class HistoryExchangeMessage(Message):
-        '''for request and pushing Hosts
-        Message layout: | type | uid | recipientIP | recipientPort | origin key | level | quant | liste | '''
-        
-        
-        
-        def __init__(self, recipientIP, recipientPort, origin, level, quant=None, liste=None, uid=None):
-                super(HistoryExchangeMessage, self).__init__(uid)
-                self.type = "HISTORYEXCHANGE"
-                self.level = None #level of exchange
-                self.liste = None #list for everything
-                self.quant = None #quantity of exchanged msgs
-                                
-                # set recipient and sender
-                if recipientIP == None or recipientPort == None:
-                        raise Exception("HistoryExchangeMessage needs recipient!")
-                else:
-                        self.recipientIP = recipientIP
-                        self.recipientPort = recipientPort
+    '''for request and pushing Hosts
+    Message layout: | type | uid | recipientIP | recipientPort | origin key | level | quant | liste | '''
+    
+    
+    
+    def __init__(self, recipientIP, recipientPort, origin, level, quant=None, liste=None, uid=None):
+        super(HistoryExchangeMessage, self).__init__(uid)
+        self.type = "HISTORYEXCHANGE"
+        self.level = None #level of exchange
+        self.liste = None #list for everything
+        self.quant = None #quantity of exchanged msgs
                         
-                if origin == None:
-                        print self
-                        raise Exception("HistoryExchangeMessage needs origin - you must be connected to the network!")
-                else:
-                        self.origin = origin
-                        
-                if level == None:
-                    raise Exception("HistoryExchangeMessage needs level!")
-                else:
-                    self.level = level
-                    
-                    if self.level == "REQUEST" or self.level == "INIREQUEST":
-                        if quant == None:
-                            raise Exception("A Requesting HistoryExchangeMessage needs a defined quant of Msgs!")
-                        else: 
-                            self.quant = quant
-                            
-                    elif self.level == "PUSH":
-                        if liste == None:
-                            raise Exception("A Pushing HistoryExchangeMessage needs to have a list of History!")
-                        else:
-                            self.liste = liste
-                    
-                    elif self.level == "REQUESTMSGS":
-                        if liste == None:
-                            raise Exception("A GetMsgs HistoryExchangeMessage needs a list of Msg Hashes to Request!")
-                        else:
-                            self.liste = liste
-                    else:
-                        logging.warning("HistoryExchangeMessage with unknown level!")
+        # set recipient and sender
+        if recipientIP == None or recipientPort == None:
+            raise Exception("HistoryExchangeMessage needs recipient!")
+        else:
+            self.recipientIP = recipientIP
+            self.recipientPort = recipientPort
                 
-        def __str__(self):
-                '''implements interface'''
-                string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.liste)])
-                return string
+        if origin == None:
+            print self
+            raise Exception("HistoryExchangeMessage needs origin - you must be connected to the network!")
+        else:
+            self.origin = origin
+                
+        if level == None:
+            raise Exception("HistoryExchangeMessage needs level!")
+        else:
+            self.level = level
+            
+            if self.level == "REQUEST" or self.level == "INIREQUEST":
+                if quant == None:
+                    raise Exception("A Requesting HistoryExchangeMessage needs a defined quant of Msgs!")
+                else: 
+                    self.quant = quant
+                    
+            elif self.level == "PUSH":
+                if liste == None:
+                    raise Exception("A Pushing HistoryExchangeMessage needs to have a list of History!")
+                else:
+                    self.liste = liste
+            
+            elif self.level == "REQUESTMSGS":
+                if liste == None:
+                    raise Exception("A GetMsgs HistoryExchangeMessage needs a list of Msg Hashes to Request!")
+                else:
+                    self.liste = liste
+            else:
+                logging.warning("HistoryExchangeMessage with unknown level!")
+            
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.type, str(self.uid), self.recipientIP, str(self.recipientPort), self.origin, self.level, str(self.quant), str(self.liste)])
+        return string
 
 
 
@@ -173,9 +176,9 @@ class TextMessage(Message):
         self.type = "TXT"
         self.name = name
         if origin != None:
-                self.origin = origin
+            self.origin = origin
         else:
-                raise MessageException("TextMessage: Sender-IP mustn't be None")
+            raise MessageException("TextMessage: Sender-IP mustn't be None")
         self.lastHop = lastHop
         self.text = text
         
@@ -317,6 +320,7 @@ def toMessage(string):
 class MessageException(Exception):
     '''Custom Exception Type for Messages'''
     def __init__(self, value):
+        super(MessageException, self).__init__()
         self.parameter = value
     def __str__(self):
         return repr(self.parameter)
@@ -332,6 +336,7 @@ class History:
         logging.debug("History applied")
 
     def addMsg(self, msg):
+        '''add TXTMessage to History'''
         self.msgDic[msg.hash] = msg
         self.hashDic.append(msg.hash)
         logging.debug("Laenge der msgDic %d, laenge der HashDic %d" %(len(self.msgDic), len(self.hashDic)))
@@ -340,29 +345,32 @@ class History:
             if len(self.hashDic) > self.hashLimit:
                 hashQuant = ((len(self.hashDic))-self.hashLimit)
                 msgQuant = ((len(self.msgDic))-self.msgLimit)
-                self.removeMsg(msgQuant,hashQuant)
+                self.removeMsg(msgQuant, hashQuant)
 
             elif len(self.hashDic) <= self.hashLimit:
                 msgQuant = ((len(self.msgDic))-self.msgLimit)
-                self.removeMsg(msgQuant,0)
+                self.removeMsg(msgQuant, 0)
         logging.debug("added msg to history")
 
-    def msgExists(self,msghash):
+    def msgExists(self, msghash):
+        '''Message is already in History (test on hash)'''
         if msghash in self.hashDic:
             return True
         else:
             return False
 
-    def msgSafed(self,msg):
+    def msgSafed(self, msg):
+        '''Message is already in History (test on TMssage object)'''
         if msg.hash in self.msgDic:
             return True
         else:
             return False
 
     def removeMsg(self, msgQuant=0, hashQuant=0):
+        '''remove x Messages from History'''
         if msgQuant > 0:
             if len(self.msgDic) >= msgQuant:
-                for i in range(0,msgQuant):
+                for i in range(0, msgQuant):
                     self.msgDic.popitem(last=False)
                 logging.debug("Erased %d msgs out of History" % msgQuant)
             else:
@@ -370,13 +378,14 @@ class History:
 
         if hashQuant > 0:
             if len(self.hashDic) >= hashQuant:
-                for i in range(0,msgQuant):
+                for i in range(0, msgQuant):
                     self.hashDic.popleft()
                 logging.debug("Erased %d hashes out of Hash-History" % hashQuant)
             else:
                 raise MessageException('Can not remove hashes out of HashDict. Its to small')
         
     def getMsgHashes(self, msgQuant):
+        '''get a list of hashes from x Messages'''
         hashList = []
         if len(self.msgDic) < msgQuant:
             msgQuant = len(self.msgDic)
@@ -389,6 +398,7 @@ class History:
         return hashList
         
     def getListMsgObjects(self, msgQuant):
+        '''get a list of x Messages'''
         msgList = []
         if len(self.msgDic) < msgQuant:
             msgQuant = len(self.msgDic)
@@ -403,6 +413,7 @@ class History:
         
         
     def getMsgObjects(self, msgHash):
+        '''get Message object from hash'''
         msg = self.msgDic[msgHash]
         #return value (msg objects) of saved msgs
         return msg
