@@ -1,5 +1,7 @@
-	# coding=utf-8
+# coding=utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+
+'''central module which defines the behaviour of a Hachat Peer'''
 
 import const
 import socket
@@ -42,7 +44,7 @@ class Peer:
         self.port = int(self.inSocket.getsockname()[1]) # port where peer listens on
         logging.info("Listening on port " + str(self.port))
             
-        self.history = message.History(const.HISTORY_SAVEDMSGSLIMIT,const.HISTORY_SAVEDHASHESLIMIT)
+        self.history = message.History(const.HISTORY_SAVEDMSGSLIMIT, const.HISTORY_SAVEDHASHESLIMIT)
         
         self.gui = gui.gui(self)
         
@@ -89,18 +91,16 @@ class Peer:
             
             #Initial Request for History
             logging.debug("Initial Request for History from " + key)
-            self.getHistory(key,initial=True)
+            self.getHistory(key, initial=True)
         else:
             self.key = Host.constructKey(self.ip, self.port)
             logging.info("You created a new Hachat-network. Your key is " + self.key)
         
         if testmode == True:
-            self.generateMsgParts(10,3000) #generates Randome Text-Msgs
+            self.generateMsgParts(10, 3000) #generates Randome Text-Msgs
         
         #start gui
-        self.gui.run()
-                
-
+        self.gui.run()                
 
     def startRecvLoop(self):
         ''' general receive loop of a peer '''
@@ -260,14 +260,14 @@ class Peer:
                     logging.debug("received HistoryExchangeMessage: " + str(msg))
                         
                     if msg.level == "REQUEST":
-                        self.pushHistory(neighbour,msg.quant)
+                        self.pushHistory(neighbour, msg.quant)
                         logging.debug("received: HistoryExchangeMessage Request. Will enter pushHistory()")
                     elif msg.level == "INIREQUEST":
                         self.pushMsgObjects(neighbour)
                         logging.debug("received: HistoryExchangeMessage Ininitial Request. Will push Msg Objects")
                     elif msg.level == "PUSH": 
                         logging.debug("received: HistoryExchangeMessage Push. Will enter HistoryControl")
-                        self.HistoryControl(neighbour,msg.liste)
+                        self.HistoryControl(neighbour, msg.liste)
                     elif msg.level == "REQUESTMSGS":
                         logging.debug("received: HistoryExchangeMessage REQUESTMSGS. Will enter pushMsgObjects")
                         self.pushMsgObjects(neighbour, msg.liste)
@@ -282,6 +282,7 @@ class Peer:
 
 
     def sendText(self, text):
+        '''make TXTMessage out of text and send to all hosts'''
         if text != "":
             msg = message.TextMessage(self.name, self.key, self.key, text)
             self.history.addMsg(msg) # add to own history
@@ -296,14 +297,14 @@ class Peer:
         oldLastHop = msg.lastHop
         msg.lastHop = self.key
         if Oneneigbour == None:
-	        for h in self.hosts.values():
-	            hostAddr = Host.constructKey(h.hostIP, h.hostPort)
-	            # don't forward to origin or lastHop
-	            if msgSender != hostAddr and oldLastHop != hostAddr:
-	                #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
-	                h.addToMsgQueue(msg)
-	            else:
-	                logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender + " and lastHop " + oldLastHop)
+            for h in self.hosts.values():
+                hostAddr = Host.constructKey(h.hostIP, h.hostPort)
+                # don't forward to origin or lastHop
+                if msgSender != hostAddr and oldLastHop != hostAddr:
+                    #logging.debug("Message " +  msg.text + " from " + msgSender + " will be forwarded to " + hostAddr )
+                    h.addToMsgQueue(msg)
+                else:
+                    logging.debug("Message " + msg.text + " will not be forwarded to initial sender " + msgSender + " and lastHop " + oldLastHop)
         else:
             host = self.hosts[Oneneigbour]
             host.addToMsgQueue(msg)
@@ -315,7 +316,7 @@ class Peer:
         # construct key and tuple
         if isinstance(addr, str):
             key = addr
-            (hostIP, hostPort) = re.split(':',addr,1)
+            (hostIP, hostPort) = re.split(':', addr, 1)
         elif isinstance(addr, tuple):
             (hostIP, hostPort) = addr
             key = Host.constructKey(hostIP, hostPort)
@@ -325,10 +326,11 @@ class Peer:
             if not (key in self.hosts):
                 # insert in host dict
                 logging.debug("adding " + key + " to hostlist")
-                h = Host(self, hostIP, hostPort)
+                Host(self, hostIP, hostPort)
             logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
     
     def maintenanceLoop(self):
+        '''thread which runs regularly maintenance tasks'''
         history_counter = self.counter
         while True:
             time.sleep(const.MAINTENANCE_SLEEP)
@@ -356,7 +358,7 @@ class Peer:
                             logging.debug("got to few Peers, filling with " + filler)
                             (fillerIP, fillerPort) = filler.split(":", 2)
                             # and add it as a new host.
-                            newHost = Host(self, fillerIP, fillerPort)
+                            Host(self, fillerIP, fillerPort)
                             del self.knownPeers[filler]
                             logging.debug("Now %d Hosts in HostList and %d Hosts in knownHosts"%(len(self.hosts), len(self.knownPeers)))
                     elif self.hosts: #if nothing in knownPeers but in hostlist
@@ -386,9 +388,9 @@ class Peer:
             
     def sendLoop(self, test=False):
         '''send Message objects of all hosts from Queue as string'''
-        if test==False:
+        if test == False:
             logging.debug("starting sendLoop")
-        if test==True:
+        if test == True:
             logging.debug("starting sendLoop in test-Mode, will erase random parts of msgs")
             
         while True:
@@ -415,9 +417,9 @@ class Peer:
                         partStr = ",".join([const.HACHAT_HEADER, str(splitUID), str(part), str(numOfParts), msgStr[:maxMsgLen]])
                         msgStr = msgStr[maxMsgLen:]
                         
-                        if test==True and part > 1:
+                        if test == True and part > 1:
                             #will drop random parts of the msg for testing
-                            if random.randrange(0,5) == 2:
+                            if random.randrange(0, 5) == 2:
                                 logging.debug("will drop msg-part %d" %(part))
                                 part += 1
                                 continue
@@ -502,9 +504,9 @@ class Peer:
         except Exception:
             raise message.MessageException("getHistory(): given neighbour needs to be a (IP,Port)Pair and needs to be in HostList")
         
-        if initial==False:
+        if initial == False:
             requestMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "REQUEST", quant=const.HISTORY_GETLIMIT)
-        elif initial==True:
+        elif initial == True:
             requestMsg = message.HistoryExchangeMessage(neighbourIP, neighbourPort, self.key, "INIREQUEST", quant=const.HISTORY_INIGETLIMIT)
             
         neighbourHost.addToMsgQueue(requestMsg)# push it in hosts msgqueue
@@ -564,9 +566,9 @@ class Peer:
         logging.debug("entered pushMsgObjects, will push History Msg Objects")
         
         if lostMsgHashes == None:
-			logging.debug("pushMsgObjects: will push last Msgs")
-			historyList = self.history.getListMsgObjects(const.HISTORY_INIGETLIMIT)
-			historyList.reverse() # to push it in right order
+            logging.debug("pushMsgObjects: will push last Msgs")
+            historyList = self.history.getListMsgObjects(const.HISTORY_INIGETLIMIT)
+            historyList.reverse() # to push it in right order
         else:
             historyList = []       
             for o in lostMsgHashes:
@@ -574,14 +576,12 @@ class Peer:
                 historyList.reverse() # to push it in right order
         
         if len(historyList) > 0:
-			for msg in historyList:
-				self.forwardMsg(msg, neighbour)
-				logging.debug("pushMsgObjects: pushed Msg %s to forwardMsg"%(msg.text))
+            for msg in historyList:
+                self.forwardMsg(msg, neighbour)
+                logging.debug("pushMsgObjects: pushed Msg %s to forwardMsg"%(msg.text))
         else: 
             logging.debug("Can't push History, no Msgs in History")
 
-
-        
 
 ############################################################################
 ##################### __del__  #############################################

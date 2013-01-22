@@ -45,6 +45,8 @@ SUPRESSED_MESSAGES = [
 #            # multiple file.
     'C0301', # Line too long
     'C0103', # Invalid name
+    'W1201', # Specify string format arguments as logging function parameters
+
 
 ]
 
