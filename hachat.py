@@ -2,11 +2,13 @@
 # coding = utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
+'''This is the basic hachat module which starts a Peer with
+    the given options from command line'''
+
 import argparse
 import logging
 import re
 import random
-import const
 from peer import Peer
 import time
 

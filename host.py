@@ -1,8 +1,10 @@
 # coding = utf-8
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
 
+'''This module provides the Host Class which represents connections 
+   to other Peers in a Hachat-Peer'''
+
 import socket
-import threading
 import time
 from collections import deque
 import message
@@ -13,7 +15,7 @@ class Host:
     '''Class representing a connection to another peer'''
     
     @classmethod
-    def constructKey(self, hostIP, hostPort):
+    def constructKey(cls, hostIP, hostPort):
         '''Class method: construct key to identify hosts in hostlist'''
         if hostIP == "localhost" or hostIP == "127.0.1.1":
             ip = "127.0.0.1"
@@ -50,6 +52,7 @@ class Host:
             
 
     def sendHello(self):
+        '''will send a HELO-Message to the corresponding peer'''
         #print 'called sendhello method'
         # helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port)
         helo = message.HeloMessage(self.hostIP, self.hostPort, self.myPeer.ip, self.myPeer.port)
