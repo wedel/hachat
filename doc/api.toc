@@ -1,0 +1,40 @@
+\contentsline {section}{Contents}{1}{section*.1}
+\contentsline {section}{\numberline {1}Module gui}{3}{section.1}
+\contentsline {subsection}{\numberline {1.1}Class gui}{3}{subsection.1.1}
+\contentsline {subsubsection}{\numberline {1.1.1}Methods}{3}{subsubsection.1.1.1}
+\contentsline {subsubsection}{\numberline {1.1.2}Properties}{3}{subsubsection.1.1.2}
+\contentsline {section}{\numberline {2}Module host}{4}{section.2}
+\contentsline {subsection}{\numberline {2.1}Variables}{4}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Class Host}{4}{subsection.2.2}
+\contentsline {subsubsection}{\numberline {2.2.1}Methods}{4}{subsubsection.2.2.1}
+\contentsline {section}{\numberline {3}Module message}{5}{section.3}
+\contentsline {subsection}{\numberline {3.1}Functions}{5}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Variables}{5}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Class ByeMessage}{5}{subsection.3.3}
+\contentsline {subsubsection}{\numberline {3.3.1}Methods}{5}{subsubsection.3.3.1}
+\contentsline {subsubsection}{\numberline {3.3.2}Properties}{5}{subsubsection.3.3.2}
+\contentsline {subsection}{\numberline {3.4}Class HeloMessage}{6}{subsection.3.4}
+\contentsline {subsubsection}{\numberline {3.4.1}Methods}{6}{subsubsection.3.4.1}
+\contentsline {subsubsection}{\numberline {3.4.2}Properties}{6}{subsubsection.3.4.2}
+\contentsline {subsection}{\numberline {3.5}Class History}{7}{subsection.3.5}
+\contentsline {subsubsection}{\numberline {3.5.1}Methods}{7}{subsubsection.3.5.1}
+\contentsline {subsection}{\numberline {3.6}Class HistoryExchangeMessage}{7}{subsection.3.6}
+\contentsline {subsubsection}{\numberline {3.6.1}Methods}{8}{subsubsection.3.6.1}
+\contentsline {subsubsection}{\numberline {3.6.2}Properties}{8}{subsubsection.3.6.2}
+\contentsline {subsection}{\numberline {3.7}Class HostExchangeMessage}{8}{subsection.3.7}
+\contentsline {subsubsection}{\numberline {3.7.1}Methods}{9}{subsubsection.3.7.1}
+\contentsline {subsubsection}{\numberline {3.7.2}Properties}{9}{subsubsection.3.7.2}
+\contentsline {subsection}{\numberline {3.8}Class Message}{9}{subsection.3.8}
+\contentsline {subsubsection}{\numberline {3.8.1}Methods}{9}{subsubsection.3.8.1}
+\contentsline {subsubsection}{\numberline {3.8.2}Properties}{10}{subsubsection.3.8.2}
+\contentsline {subsection}{\numberline {3.9}Class MessageException}{10}{subsection.3.9}
+\contentsline {subsubsection}{\numberline {3.9.1}Methods}{10}{subsubsection.3.9.1}
+\contentsline {subsubsection}{\numberline {3.9.2}Properties}{11}{subsubsection.3.9.2}
+\contentsline {subsection}{\numberline {3.10}Class TextMessage}{11}{subsection.3.10}
+\contentsline {subsubsection}{\numberline {3.10.1}Methods}{11}{subsubsection.3.10.1}
+\contentsline {subsubsection}{\numberline {3.10.2}Properties}{12}{subsubsection.3.10.2}
+\contentsline {section}{\numberline {4}Module peer}{13}{section.4}
+\contentsline {subsection}{\numberline {4.1}Variables}{13}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Class Peer}{13}{subsection.4.2}
+\contentsline {subsubsection}{\numberline {4.2.1}Methods}{13}{subsubsection.4.2.1}
+\contentsline {section}{Index}{15}{section*.2}
