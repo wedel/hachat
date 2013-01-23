@@ -45,11 +45,12 @@ else:
             peer = Peer(ip = args.ip, port = args.port, name = name, testmode=True)
         else:
             peer = Peer(ip = args.ip, port = args.port, name = name)
+            
+        # terminate peer
+        peer.__del__()
+        time.sleep(1)
     else:
         print "You need a link or your own ip adress to start hachat!"
-
-peer.__del__()
-time.sleep(1)
 
    
 
