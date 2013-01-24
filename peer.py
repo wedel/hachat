@@ -355,7 +355,7 @@ class Peer:
                         host.__del__()
                         del self.hosts[key]
                         # send DeadMessage to all your Peers
-                        deadmsg = DeadMessage(self.key, key)
+                        deadmsg = message.DeadMessage(self.key, key)
                         self.sendAll(deadmsg)
                     else:
                         host.lastSeen = 0 # reset lastSeen
@@ -470,9 +470,13 @@ class Peer:
         logging.debug("entered pushHosts, request for %d hosts"%(quant))
         listofHosts = []
         i = 0
-        # -1 because neighbour is part of hostlist
-        if len(self.hosts) - 1 < quant:
-            quant = len(self.hosts) - 1
+        takefromhosts = 0
+        
+        # adjust quantitiy
+        if len(self.knownPeers) < quant:
+            takefromhosts = 1
+            if len(self.knownPeers) + len(self.hosts) - 1 < quant: # -1 because neighbour is part of hostlist
+                quant = len(self.knownPeers) + len(self.hosts) - 1 # give everything you have
         
         # get neighbour from hostlist
         try:
@@ -483,9 +487,12 @@ class Peer:
             logging.error(str(e))
             
         while i < quant:
-            key = random.choice(self.hosts.keys())
+            if takefromhosts == 0:
+                key = random.choice(self.knownPeers.keys())
+            else:
+                key = random.choice(self.knownPeers.keys() + self.hosts.keys())
             if key == None:
-                break #nothing in hostlist
+                break #nothing in knownPeers
             # check if key doesnt belong to neighbour
             if neighbourHost != self.hosts[key]:
                 if key not in listofHosts:
