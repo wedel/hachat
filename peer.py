@@ -239,6 +239,12 @@ class Peer:
                     if key in self.knownPeers:
                         del self.knownPeers[key]
                     logging.debug("received BYE, deleting " + key)
+                    
+                elif isinstance(msg, message.DeadMessage):
+                    deadpeer = msg.peer
+                    if deadpeer in self.knownPeers:
+                        del self.knownPeers[deadpeer]
+                    logging.debug("deleted " + deadpeer + " from knownPeers")
                 
                 elif isinstance(msg, message.HostExchangeMessage):
                     neighbour = msg.origin
@@ -279,15 +285,17 @@ class Peer:
                     logging.warn(type(msg))
     #END OF processMessage
 
-
+    def sendAll(self, msg):
+        '''send Message Object to all your Peers'''
+        for h in self.hosts.values():
+                h.addToMsgQueue(msg)
 
     def sendText(self, text):
         '''make TXTMessage out of text and send to all hosts'''
         if text != "":
             msg = message.TextMessage(self.name, self.key, self.key, text)
             self.history.addMsg(msg) # add to own history
-            for h in self.hosts.values():
-                h.addToMsgQueue(msg)
+            self.sendAll(msg)
 
     def forwardMsg(self, msg, Oneneigbour=None):
         '''forwarding TextMessage, but not to initial sender
@@ -346,6 +354,9 @@ class Peer:
                         logging.debug("deleting host " + key)
                         host.__del__()
                         del self.hosts[key]
+                        # send DeadMessage to all your Peers
+                        deadmsg = DeadMessage(self.key, key)
+                        self.sendAll(deadmsg)
                     else:
                         host.lastSeen = 0 # reset lastSeen
 
