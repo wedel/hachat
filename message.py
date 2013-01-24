@@ -236,16 +236,6 @@ def toMessage(string):
             raise MessageException("malformed HeloMessage recieved")
             print e
                     
-    elif type == "HISTREQ":
-        try:
-            quantity = int(rest)
-            msg = HistReqMessage(uid, quantity)
-            return msg
-
-        except Exception, e:
-            raise MessageException("malformed HistReqMessage recieved")
-            print e
-                    
     elif type == "TXT":
         try:
             (hash, name, origin, lastHop, text) = re.split(',', rest, 4) # get rest if message
