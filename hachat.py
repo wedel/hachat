@@ -26,6 +26,8 @@ args = parser.parse_args()
 # initialise logger
 if args.verbose == True:
     logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 # set name
 name = args.name
