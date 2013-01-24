@@ -418,7 +418,7 @@ class Peer:
                     # check in how many parts the message has to be splitted
                     msgLen = len(msgStr)
                     maxMsgLen = const.HACHAT_BUFSIZE - len(str(splitUID)) - len(const.HACHAT_HEADER) - 10 # 10 for some space for the part and numOfParts variables
-                    logging.debug("%i - %i - %i - 10 = %i" % (const.HACHAT_BUFSIZE, len(str(splitUID)), len(const.HACHAT_HEADER), maxMsgLen))
+                    #logging.debug("%i - %i - %i - 10 = %i" % (const.HACHAT_BUFSIZE, len(str(splitUID)), len(const.HACHAT_HEADER), maxMsgLen))
                     numOfParts = (msgLen / maxMsgLen) + 1
                     logging.debug("splitting message %s of length %i into %i parts (maxMsgLen is %i)" % (msgStr, msgLen, numOfParts, maxMsgLen))
                     part = 1
@@ -492,7 +492,7 @@ class Peer:
             else:
                 key = random.choice(self.knownPeers.keys() + self.hosts.keys())
             if key == None:
-                break #nothing in knownPeers
+                break #nothing in knownPeers and hosts
             # check if key doesnt belong to neighbour
             if neighbourHost != self.hosts[key]:
                 if key not in listofHosts:
