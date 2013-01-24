@@ -207,6 +207,20 @@ class ByeMessage(Message):
         '''implements interface'''
         string = ",".join([self.type, str(self.uid), self.origin])
         return string
+
+        
+class DeadMessage(Message):
+    '''Message that tells a Peer that another Peer is dead'''
+    def __init__(self, origin, peer, uid=None):
+        super(DeadMessage, self).__init__(uid)
+        self.type = "DEAD"
+        self.origin = origin
+        self.peer = peer
+    
+    def __str__(self):
+        '''implements interface'''
+        string = ",".join([self.type, str(self.uid), self.origin, self.peer])
+        return string
             
 
 def toMessage(string):
@@ -224,12 +238,10 @@ def toMessage(string):
     if type == "HELO":
         try:
             (recipientIP, recipientPort, senderIP, senderPort) = re.split(',', rest, 3) # get rest of message
-            # (recipientIP, recipientPort, senderPort) = re.split(',', rest, 2) # get rest of message
             # cast ports to int
             recipientPort = int(recipientPort)
             senderPort = int(senderPort)
             msg = HeloMessage(recipientIP, recipientPort, senderIP, senderPort, uid)
-            # msg = HeloMessage(recipientIP, recipientPort, senderPort, uid)
             return msg
                 
         except Exception, e:
@@ -255,10 +267,21 @@ def toMessage(string):
     elif type == "BYE":
         try:
             origin = str(rest) # get rest of message
+            msg = ByeMessage(origin, uid)
         except Exception, e:
             raise MessageException("malformed ByeMessage recieved")
+            print e
         
-        msg = ByeMessage(origin, uid)
+        return msg
+    
+    elif type == "DEAD":
+        try:
+            (origin, peer) = re.split(',', rest, 1) #get rest of message
+            msg = DeadMessage(origin, peer, uid)
+        except Exception, e:
+            raise MessageException("malformed DeadMessage recieved")
+            print e
+        
         return msg
     
     elif type == "HOSTEXCHANGE":
@@ -407,6 +430,3 @@ class History:
         msg = self.msgDic[msgHash]
         #return value (msg objects) of saved msgs
         return msg
-
-                
-
