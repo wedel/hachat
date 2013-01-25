@@ -35,6 +35,9 @@ class Host:
         # variable to check you get regularly helo
         self.lastSeen = 1
         
+        # variable to mark bootstrapping peers
+        self.bootstrap = False
+        
         # init own msgQueue
         self.msgQueue = deque()
         

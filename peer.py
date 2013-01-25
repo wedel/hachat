@@ -79,6 +79,7 @@ class Peer:
             self.key = None
             (hostIP, hostPort) = firstHost
             h = Host(self, hostIP, hostPort)
+            h.bootstrap = True
             
             # wait until you're connected to the network
             while self.key == None:
@@ -359,6 +360,14 @@ class Peer:
                         self.sendAll(deadmsg)
                     else:
                         host.lastSeen = 0 # reset lastSeen
+                        
+                    if len(temp) > const.INI_PEERLIMIT and host.bootstrap == True:
+                        # delete Host if it was just for bootstrapping and you know enough others
+                        msg = message.ByeMessage(self.key)
+                        host.addToMsgQueue(msg)
+                        logging.debug("deleting host " + key)
+                        host.__del__()
+                        del self.hosts[key]
 
                 # do we have to few neighbors and we know other peers?
                 if len(self.hosts) < const.MIN_PEERLIMIT:
