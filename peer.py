@@ -220,7 +220,7 @@ class Peer:
                     if not self.history.msgExists(msg.hash) : # if i don't already know message
                         self.history.addMsg(msg)
                         self.forwardMsg(msg)
-                        self.gui.empfang(msg) #gibt nachricht an gui weiter 
+                        self.gui.queue.put(msg) #gibt nachricht an gui weiter 
                         
                         key = msg.origin
                         if key in self.hosts:
