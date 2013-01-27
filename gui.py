@@ -1,3 +1,5 @@
+'''this is the module for the GUI'''
+
 import const
 import Tkinter
 import ScrolledText

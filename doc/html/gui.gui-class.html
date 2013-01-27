@@ -60,6 +60,8 @@ object --+
 </pre>
 
 <hr />
+<p>GUI Class for Hachat User Interface</p>
+
 <!-- ==================== INSTANCE METHODS ==================== -->
 <a name="section-InstanceMethods"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -101,10 +103,11 @@ object --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="empfang"></a><span class="summary-sig-name">empfang</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">msg</span>)</span></td>
+          <td><span class="summary-sig"><a name="check_queue"></a><span class="summary-sig-name">check_queue</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      resieve a txt-msg and push it in the gui uses a Queue which is 
+      checked every 50ms</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="gui-pysrc.html#gui.empfang">source&nbsp;code</a></span>
+            <span class="codelink"><a href="gui-pysrc.html#gui.check_queue">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -118,7 +121,8 @@ object --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="ende"></a><span class="summary-sig-name">ende</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td><span class="summary-sig"><a name="ende"></a><span class="summary-sig-name">ende</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      stops hachat and gui</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="gui-pysrc.html#gui.ende">source&nbsp;code</a></span>
             
@@ -135,7 +139,8 @@ object --+
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a name="ende_"></a><span class="summary-sig-name">ende_</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">event</span>)</span></td>
+        <span class="summary-sig-arg">event</span>)</span><br />
+      event: calls ende() to stop gui and hachat</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="gui-pysrc.html#gui.ende_">source&nbsp;code</a></span>
             
@@ -151,24 +156,8 @@ object --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="popup_"></a><span class="summary-sig-name">popup_</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">event</span>)</span></td>
-          <td align="right" valign="top">
-            <span class="codelink"><a href="gui-pysrc.html#gui.popup_">source&nbsp;code</a></span>
-            
-          </td>
-        </tr>
-      </table>
-      
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
-    </td><td class="summary">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td><span class="summary-sig"><a name="run"></a><span class="summary-sig-name">run</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td><span class="summary-sig"><a name="run"></a><span class="summary-sig-name">run</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      start gui</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="gui-pysrc.html#gui.run">source&nbsp;code</a></span>
             
@@ -184,7 +173,8 @@ object --+
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="senden"></a><span class="summary-sig-name">senden</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td><span class="summary-sig"><a name="senden"></a><span class="summary-sig-name">senden</span>(<span class="summary-sig-arg">self</span>)</span><br />
+      send a txt-msg from the gui</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="gui-pysrc.html#gui.senden">source&nbsp;code</a></span>
             
@@ -201,7 +191,8 @@ object --+
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a name="senden_"></a><span class="summary-sig-name">senden_</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">event</span>)</span></td>
+        <span class="summary-sig-arg">event</span>)</span><br />
+      event: calls senden() to send a txt-msg from the gui</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="gui-pysrc.html#gui.senden_">source&nbsp;code</a></span>
             
@@ -322,7 +313,7 @@ object --+
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Tue Jan 22 15:59:22 2013
+    Generated by Epydoc 3.0.1 on Sun Jan 27 17:53:50 2013
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"
