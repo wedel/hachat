@@ -88,7 +88,7 @@ class Peer:
             #Initial Request for some more hosts from firstHost
             key = h.constructKey(hostIP, hostPort)
             logging.debug("Initial Request for some peers from " + key)
-            self.requestHosts(key, const.INI_PEERLIMIT) # and get some more hosts
+            self.requestHosts(key, const.MIN_PEERLIMIT) # and get some more hosts
             
             #Initial Request for History
             logging.debug("Initial Request for History from " + key)
@@ -361,7 +361,7 @@ class Peer:
                     else:
                         host.lastSeen = 0 # reset lastSeen
                         
-                    if len(temp) > const.INI_PEERLIMIT and host.bootstrap == True:
+                    if len(temp) > const.MIN_PEERLIMIT and host.bootstrap == True:
                         # delete Host if it was just for bootstrapping and you know enough others
                         msg = message.ByeMessage(self.key)
                         host.addToMsgQueue(msg)
