@@ -1,12 +1,8 @@
 import const
 import Tkinter
 import ScrolledText
-import tkMessageBox
-import tkSimpleDialog
 import Queue
-#import time
 import logging
-import threading 
 
 CODEC = 'utf8'
 
@@ -23,24 +19,24 @@ class gui(object):
         
         self.stop = False
                 
-        self.fpopup = Tkinter.Frame(self.root,width=500) 
+        self.fpopup = Tkinter.Frame(self.root, width=500) 
         self.fpopup.pack(expand=1, fill=ScrolledText.BOTH) 
 
-        self.textfenster = ScrolledText.ScrolledText(self.fpopup,width=90,height=24,background='white')
+        self.textfenster = ScrolledText.ScrolledText(self.fpopup, width=90, height=24, background='white')
         self.textfenster.pack(fill=ScrolledText.BOTH, expand='YES')
     
-        self.eingabe = Tkinter.Entry(self.fpopup,width=60,background='white')
+        self.eingabe = Tkinter.Entry(self.fpopup, width=60, background='white')
         self.eingabe.pack(side=ScrolledText.LEFT, fill=ScrolledText.BOTH, expand='YES')
 
         ## Bindings . . .
-        self.eingabe.bind('<Return>',self.senden_)
-        self.eingabe.bind('<F1>',self.senden_)
+        self.eingabe.bind('<Return>', self.senden_)
+        self.eingabe.bind('<F1>', self.senden_)
 
         ## Buttons    
-        self.but2 = Tkinter.Button(self.fpopup,text='Senden', command = self.senden)
+        self.but2 = Tkinter.Button(self.fpopup, text='Senden', command=self.senden)
         self.but2.pack(side = ScrolledText.LEFT, expand='NO')
 
-        self.but3 = Tkinter.Button(self.fpopup,text='Beenden', command = self.ende)
+        self.but3 = Tkinter.Button(self.fpopup, text='Beenden', command=self.ende)
         self.but3.pack(side = ScrolledText.LEFT, expand='NO')
 
 
@@ -78,8 +74,8 @@ class gui(object):
     def senden(self):
         '''send a txt-msg from the gui'''
         msg = self.eingabe.get().encode(CODEC)
-        self.textfenster.insert(Tkinter.END,self.parent.name+": "+msg+'\n')
+        self.textfenster.insert(Tkinter.END, self.parent.name+": "+msg+'\n')
         self.textfenster.see(Tkinter.END)    
-        self.eingabe.delete('0',Tkinter.END)
+        self.eingabe.delete('0', Tkinter.END)
         self.eingabe.focus_set()
         self.parent.sendText(msg) #ruft sendText() aus Peer
